@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Inventory</string>
+    <string name="barcode_scanner_title">Barcode Scanner</string>
+    <string name="last_scanned_barcode">Last Scanned Barcode</string>
+    <string name="no_barcode_scanned">No barcode scanned</string>
+    <string name="api_response">API Response</string>
+    <string name="waiting_for_scan">Waiting for scan…</string>
+    <string name="clear_input">Clear</string>
+    <string name="nix_s_auto_tire_service_logo"><![CDATA[Nix\'s Auto & Tire Service Logo]]></string>
+</resources>
