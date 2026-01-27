@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="40dp"
         android:layout_marginTop="152dp"
-        android:text="@string/barcode_scanner_title"
+        android:text="Barcode Scanner"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -39,7 +39,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/last_scanned_barcode"
+                android:text="Last Scanned Barcode"
                 android:textColor="#999999"
                 android:textSize="14sp" />
 
@@ -48,7 +48,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="@string/no_barcode_scanned"
+                android:text="No barcode scanned"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
@@ -82,7 +82,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/api_response"
+                    android:text="API Response"
                     android:textColor="#999999"
                     android:textSize="14sp" />
 
@@ -91,7 +91,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="@string/waiting_for_scan"
+                    android:text="Waiting for scan..."
                     android:textIsSelectable="true"
                     android:textSize="16sp" />
 
@@ -107,7 +107,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:backgroundTint="@color/blue"
-        android:text="@string/clear_input"
+        android:text="Clear"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -118,7 +118,7 @@
         android:layout_width="228dp"
         android:layout_height="121dp"
         android:layout_marginTop="12dp"
-        android:contentDescription="@string/nix_s_auto_tire_service_logo"
+        android:contentDescription="Nix's Auto &amp; Tire Service Logo"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"

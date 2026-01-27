@@ -16,7 +16,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:gravity="center"
-            android:text="@string/barcode_information_title"
+            android:text="Is this information correct?"
             android:textSize="30sp"
             android:textStyle="bold" />
 
@@ -34,7 +34,7 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="8dp"
             android:gravity="center"
-            android:text="@string/product_title"
+            android:text="Product Title"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -43,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/brand_value"
+            android:text="Brand:"
             android:textSize="16sp" />
 
         <TextView
@@ -51,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/size_value"
+            android:text="Size:"
             android:textSize="16sp" />
 
         <LinearLayout
