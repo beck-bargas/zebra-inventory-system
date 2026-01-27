@@ -62,6 +62,9 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.gson)
 
+    // Image Loading from URL
+    implementation("com.github.bumptech.glide:glide:5.0.5")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

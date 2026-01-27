@@ -10,11 +10,13 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.beck.tirescanner.network.RetrofitClient
+import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -166,6 +168,16 @@ class MainActivity : AppCompatActivity() {
 
                     // Show product info
                     val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)
+                    val imageView = dialogView.findViewById<ImageView>(R.id.tireImage)
+
+                    // Set image in ImageView
+                    if (product.images.isNotEmpty()) {
+                        Glide.with(this@MainActivity)
+                            .load(product.images[0])
+                            .into(imageView)
+                    } else {
+                        imageView.setImageResource(R.drawable.placeholder)
+                    }
 
                     dialogView.findViewById<TextView>(R.id.tvTitle).text = "${product.title}"
                     dialogView.findViewById<TextView>(R.id.tvSize).text = "Size: ${product.size}"

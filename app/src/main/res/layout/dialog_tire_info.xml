@@ -16,6 +16,13 @@
         android:textSize="30sp"
         android:textStyle="bold" />
 
+    <ImageView
+        android:id="@+id/tireImage"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="Tire image" />
+
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"
