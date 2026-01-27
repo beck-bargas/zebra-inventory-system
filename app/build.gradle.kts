@@ -19,8 +19,6 @@ android {
         properties.load(project.rootProject.file("local.properties").inputStream())
 
         buildConfigField("String", "BARCODE_API_KEY", "\"${properties.getProperty("BARCODE_API_KEY")}\"")
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
@@ -64,8 +62,4 @@ dependencies {
 
     // Image Loading from URL
     implementation("com.github.bumptech.glide:glide:5.0.5")
-
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }
