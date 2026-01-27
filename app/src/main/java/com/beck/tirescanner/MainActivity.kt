@@ -20,6 +20,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.beck.tirescanner.database.TireEntry
+import com.beck.tirescanner.database.TireRepository
 import com.beck.tirescanner.models.Product
 import com.beck.tirescanner.network.RetrofitClient
 import com.beck.tirescanner.utils.TireSizeTextWatcher
@@ -27,11 +29,14 @@ import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+    // Database
+    private lateinit var tireRepository: TireRepository
 
     // UI Elements
     private lateinit var barcodeText: TextView
     private lateinit var responseText: TextView
     private lateinit var clearButton: Button
+
     // DataWedge configuration
     private val DATAWEDGE_INTENT_ACTION = "com.beck.tirescanner.SCAN"
     private val DATAWEDGE_INTENT_CATEGORY = "android.intent.category.DEFAULT"
@@ -56,6 +61,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Initialize repository
+        tireRepository = TireRepository(this)
+
         // Initialize UI elements
         barcodeText = findViewById(R.id.barcodeText)
         responseText = findViewById(R.id.responseText)
@@ -76,7 +84,6 @@ class MainActivity : AppCompatActivity() {
         handleIntent(intent)
     }
 
-    // Handle intent if launched by DataWedge
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == "com.beck.tirescanner.SCAN") {
             val barcode = intent.getStringExtra("com.symbol.datawedge.data_string")
@@ -113,25 +120,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun configureDataWedge() {
-        // Send intent to configure DataWedge profile
         val dwIntent = Intent()
         dwIntent.setAction("com.symbol.datawedge.api.ACTION")
         dwIntent.putExtra("com.symbol.datawedge.api.CREATE_PROFILE", "BarcodeScannerProfile")
         sendBroadcast(dwIntent)
 
-        // Configure the profile
         val profileBundle = Bundle()
         profileBundle.putString("PROFILE_NAME", "BarcodeScannerProfile")
         profileBundle.putString("PROFILE_ENABLED", "true")
         profileBundle.putString("CONFIG_MODE", "UPDATE")
 
-        // Associate app with profile
         val appConfig = Bundle()
         appConfig.putString("PACKAGE_NAME", packageName)
         appConfig.putStringArray("ACTIVITY_LIST", arrayOf("*"))
         profileBundle.putParcelableArray("APP_LIST", arrayOf(appConfig))
 
-        // Configure intent output
         val intentConfig = Bundle()
         intentConfig.putString("PLUGIN_NAME", "INTENT")
         intentConfig.putString("RESET_CONFIG", "true")
@@ -140,7 +143,7 @@ class MainActivity : AppCompatActivity() {
         intentProps.putString("intent_output_enabled", "true")
         intentProps.putString("intent_action", DATAWEDGE_INTENT_ACTION)
         intentProps.putString("intent_category", DATAWEDGE_INTENT_CATEGORY)
-        intentProps.putInt("intent_delivery", 0) // Send via startActivity
+        intentProps.putInt("intent_delivery", 0)
 
         intentConfig.putBundle("PARAM_LIST", intentProps)
         profileBundle.putBundle("PLUGIN_CONFIG", intentConfig)
@@ -149,20 +152,16 @@ class MainActivity : AppCompatActivity() {
         profileIntent.action = "com.symbol.datawedge.api.ACTION"
         profileIntent.putExtra("com.symbol.datawedge.api.SET_CONFIG", profileBundle)
         sendBroadcast(profileIntent)
-
     }
 
     private fun handleBarcodeScanned(barcode: String, barcodeType: String) {
         runOnUiThread {
             barcodeText.text = barcode
         }
-
-        // Send barcode to API
         sendBarcodeToAPI(barcode, barcodeType)
     }
 
     private fun sendBarcodeToAPI(barcode: String, barcodeType: String) {
-        // Make API call
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.apiService.getProductInfo(
@@ -173,45 +172,23 @@ class MainActivity : AppCompatActivity() {
                 if (response.products.isNotEmpty()) {
                     val product = response.products[0]
 
-                    // Show product info
-                    val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)
-                    val imageView = dialogView.findViewById<ImageView>(R.id.tireImage)
-                    val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
-                    val editButton = dialogView.findViewById<Button>(R.id.editButton)
+                    // Check if tire already exists in database
+                    val existingTire = tireRepository.getTireByDetails(
+                        barcode,
+                        product.brand,
+                        product.size
+                    )
 
-                    // Set image in ImageView
-                    val imageUrl = product.images?.firstOrNull()
-                    if (imageUrl != null) {
-                        Glide.with(this@MainActivity)
-                            .load(product.images[0])
-                            .into(imageView)
+                    if (existingTire != null) {
+                        showExistingTireDialog(existingTire, product, barcode)
                     } else {
-                        imageView.setImageResource(R.drawable.placeholder)
+                        showConfirmationDialog(product, barcode)
                     }
-
-                    dialogView.findViewById<TextView>(R.id.tvTitle).text = "${product.title}"
-                    dialogView.findViewById<TextView>(R.id.tvSize).text = "Size: ${product.size}"
-                    dialogView.findViewById<TextView>(R.id.tvBrand).text = "Brand: ${product.brand}"
-
-
-                    val dialog = AlertDialog.Builder(this@MainActivity)
-                        .setView(dialogView)
-                        .create()
-
-                    confirmButton.setOnClickListener {
-                        dialog.dismiss()
-                        askAmount()
-                    }
-
-                    editButton.setOnClickListener {
-                        dialog.dismiss()
-                        showManualEntryDialog(product)
-                    }
-
-                    dialog.show()
                 } else {
                     runOnUiThread {
                         responseText.text = "No product found for barcode: $barcode"
+                        // Show manual entry with empty product
+                        showManualEntryDialog(barcode, null)
                     }
                 }
             } catch (e: Exception) {
@@ -222,7 +199,145 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showManualEntryDialog(product: Product?) {
+    private fun showConfirmationDialog(product: Product, barcode: String) {
+        runOnUiThread {
+            val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)
+            val imageView = dialogView.findViewById<ImageView>(R.id.tireImage)
+            val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
+            val editButton = dialogView.findViewById<Button>(R.id.editButton)
+
+            // Set image in ImageView
+            val imageUrl = product.images?.firstOrNull()
+            if (imageUrl != null) {
+                Glide.with(this@MainActivity)
+                    .load(product.images[0])
+                    .into(imageView)
+            } else {
+                imageView.setImageResource(R.drawable.placeholder)
+            }
+
+            dialogView.findViewById<TextView>(R.id.tvTitle).text = "${product.title}"
+            dialogView.findViewById<TextView>(R.id.tvSize).text = "Size: ${product.size}"
+            dialogView.findViewById<TextView>(R.id.tvBrand).text = "Brand: ${product.brand}"
+
+            val dialog = AlertDialog.Builder(this@MainActivity)
+                .setView(dialogView)
+                .create()
+
+            confirmButton.setOnClickListener {
+                dialog.dismiss()
+                askAmount(product, barcode)
+            }
+
+            editButton.setOnClickListener {
+                dialog.dismiss()
+                showManualEntryDialog(barcode, product)
+            }
+
+            dialog.show()
+        }
+    }
+
+    private fun showExistingTireDialog(existingTire: TireEntry, product: Product, barcode: String) {
+        runOnUiThread {
+            AlertDialog.Builder(this)
+                .setTitle("Tire Already in Inventory")
+                .setMessage("${existingTire.brand} ${existingTire.size}\nCurrent quantity: ${existingTire.quantity}\n\nWhat would you like to do?")
+                .setPositiveButton("Add More") { _, _ ->
+                    askQuantityToAdd(existingTire)
+                }
+                .setNegativeButton("Remove") { _, _ ->
+                    askQuantityToRemove(existingTire)
+                }
+                .setNeutralButton("Cancel", null)
+                .show()
+        }
+    }
+
+    private fun askQuantityToAdd(existingTire: TireEntry) {
+        val dialogView = layoutInflater.inflate(R.layout.tire_amount, null)
+        val input = dialogView.findViewById<EditText>(R.id.etAmount)
+        val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
+        val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
+
+        dialogView.findViewById<TextView>(R.id.etTitle).text = "Add Quantity"
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.show()
+
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        confirmButton.setOnClickListener {
+            val amountToAdd = input.text.toString().toIntOrNull()
+
+            if (amountToAdd != null && amountToAdd > 0) {
+                val success = tireRepository.increaseQuantity(existingTire.id, amountToAdd)
+
+                if (success) {
+                    val newTotal = existingTire.quantity + amountToAdd
+                    Toast.makeText(this, "Added $amountToAdd tires. New total: $newTotal", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "Error adding tires", Toast.LENGTH_SHORT).show()
+                }
+                dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Please enter a valid quantity", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun askQuantityToRemove(existingTire: TireEntry) {
+        val dialogView = layoutInflater.inflate(R.layout.tire_amount, null)
+        val input = dialogView.findViewById<EditText>(R.id.etAmount)
+        val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
+        val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
+
+        dialogView.findViewById<TextView>(R.id.etTitle).text = "Remove Quantity"
+        input.hint = "Max: ${existingTire.quantity}"
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.show()
+
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        confirmButton.setOnClickListener {
+            val amountToRemove = input.text.toString().toIntOrNull()
+
+            if (amountToRemove != null && amountToRemove > 0) {
+                if (amountToRemove > existingTire.quantity) {
+                    Toast.makeText(this, "Cannot remove more than ${existingTire.quantity}", Toast.LENGTH_SHORT).show()
+                } else {
+                    val success = tireRepository.decreaseQuantity(existingTire.id, amountToRemove)
+
+                    if (success) {
+                        val newTotal = existingTire.quantity - amountToRemove
+                        if (newTotal == 0) {
+                            Toast.makeText(this, "Removed all tires. Entry deleted.", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(this, "Removed $amountToRemove tires. Remaining: $newTotal", Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        Toast.makeText(this, "Error removing tires", Toast.LENGTH_SHORT).show()
+                    }
+                    dialog.dismiss()
+                }
+            } else {
+                Toast.makeText(this, "Please enter a valid quantity", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showManualEntryDialog(barcode: String, product: Product?) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_manual_entry, null)
 
         val brandInput = dialogView.findViewById<EditText>(R.id.brandInput)
@@ -243,7 +358,6 @@ class MainActivity : AppCompatActivity() {
         if (product != null) {
             brandInput.setText(product.brand.orEmpty())
 
-            // Try to parse prefix from size if it exists
             val sizeWithPrefix = product.size.orEmpty()
             if (sizeWithPrefix.startsWith("P ")) {
                 tirePrefixSpinner.setSelection(1)
@@ -256,13 +370,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Create dialog without default buttons
         val dialog = AlertDialog.Builder(this)
             .setTitle("Enter Tire Information")
             .setView(dialogView)
             .create()
 
-        // Setup custom button clicks
         cancelButton.setOnClickListener {
             dialog.dismiss()
         }
@@ -279,7 +391,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (brand.isNotEmpty() && sizeNumbers.isNotEmpty()) {
-                askAmount()
+                val manualProduct = Product(
+                    title = "",
+                    brand = brand,
+                    size = fullSize,
+                    images = null,
+                    barcode = barcode
+                )
+                askAmount(manualProduct, barcode)
                 dialog.dismiss()
             }
         }
@@ -287,31 +406,27 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    // Ask for amount
-    private fun askAmount() {
+    private fun askAmount(product: Product, barcode: String) {
         val dialogView = layoutInflater.inflate(R.layout.tire_amount, null)
         val input = dialogView.findViewById<EditText>(R.id.etAmount)
         val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
         val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
 
-        // Create dialog without default buttons
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .create()
 
         dialog.show()
 
-        // Handle cancel button
         cancelButton.setOnClickListener {
             dialog.dismiss()
         }
 
-        // Handle confirm button
         confirmButton.setOnClickListener {
             val amount = input.text.toString().toIntOrNull()
 
             if (amount != null && amount > 0) {
-                askVendor()
+                askVendor(product, barcode, amount)
                 dialog.dismiss()
             } else {
                 Toast.makeText(this, "Please enter a valid amount", Toast.LENGTH_SHORT).show()
@@ -319,8 +434,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Ask for Vendor
-    private fun askVendor() {
+    private fun askVendor(product: Product, barcode: String, quantity: Int) {
         val dialogView = layoutInflater.inflate(R.layout.vendor_info, null)
         val listView = dialogView.findViewById<ListView>(R.id.vendorListView)
         val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
@@ -328,7 +442,7 @@ class MainActivity : AppCompatActivity() {
 
         val vendors = arrayOf("None","NTW", "K&M", "BFS", "Discount Tire", "Hesselbein", "USAutoforce", "ATD")
 
-        var selectedVendor: String = "None"  // Default to "None"
+        var selectedVendor: String = "None"
 
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, vendors)
         listView.adapter = adapter
@@ -339,7 +453,7 @@ class MainActivity : AppCompatActivity() {
 
         dialog.show()
 
-        // Pre-select "None" (position 0) after dialog is shown
+        // Pre-select "None"
         listView.post {
             listView.getChildAt(0)?.setBackgroundColor(Color.parseColor("#30000000"))
         }
@@ -361,8 +475,34 @@ class MainActivity : AppCompatActivity() {
         }
 
         saveButton.setOnClickListener {
-            Toast.makeText(this, "Saved to Database", Toast.LENGTH_SHORT).show()
+            saveTireToInventory(product, barcode, quantity, selectedVendor)
             dialog.dismiss()
+        }
+    }
+
+    private fun saveTireToInventory(product: Product, barcode: String, quantity: Int, vendor: String?) {
+        val existingTire = tireRepository.getTireByDetails(barcode, product.brand, product.size)
+
+        if (existingTire != null) {
+            tireRepository.increaseQuantity(existingTire.id, quantity)
+            Toast.makeText(this, "Added $quantity to existing inventory. Total: ${existingTire.quantity + quantity}", Toast.LENGTH_LONG).show()
+        } else {
+            val id = tireRepository.insertTire(product, barcode, quantity, vendor)
+
+            if (id > 0) {
+                Toast.makeText(this, "New tire saved! Quantity: $quantity", Toast.LENGTH_LONG).show()
+
+                // LOG ALL TIRES IN DATABASE
+                Log.d("Database", "=== ALL TIRES IN DATABASE ===")
+                val allTires = tireRepository.getAllTires()
+                Log.d("Database", "Total entries: ${allTires.size}")
+                allTires.forEach { tire ->
+                    Log.d("Database", "ID: ${tire.id}, Brand: ${tire.brand}, Size: ${tire.size}, Qty: ${tire.quantity}, Vendor: ${tire.vendor}")
+                }
+                Log.d("Database", "=== END ===")
+            } else {
+                Toast.makeText(this, "Error saving tire", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
