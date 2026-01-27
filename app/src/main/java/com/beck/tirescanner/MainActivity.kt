@@ -176,8 +176,8 @@ class MainActivity : AppCompatActivity() {
                     // Show product info
                     val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)
                     val imageView = dialogView.findViewById<ImageView>(R.id.tireImage)
-                    val yesButton = dialogView.findViewById<Button>(R.id.yesButton)
-                    val noButton = dialogView.findViewById<Button>(R.id.noButton)
+                    val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
+                    val editButton = dialogView.findViewById<Button>(R.id.editButton)
 
                     // Set image in ImageView
                     val imageUrl = product.images?.firstOrNull()
@@ -198,12 +198,12 @@ class MainActivity : AppCompatActivity() {
                         .setView(dialogView)
                         .create()
 
-                    yesButton.setOnClickListener {
+                    confirmButton.setOnClickListener {
                         dialog.dismiss()
                         askAmount()
                     }
 
-                    noButton.setOnClickListener {
+                    editButton.setOnClickListener {
                         dialog.dismiss()
                         showManualEntryDialog(product)
                     }
@@ -291,26 +291,40 @@ class MainActivity : AppCompatActivity() {
     private fun askAmount() {
         val dialogView = layoutInflater.inflate(R.layout.tire_amount, null)
         val input = dialogView.findViewById<EditText>(R.id.etAmount)
+        val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
+        val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
 
-        AlertDialog.Builder(this@MainActivity)
-
+        // Create dialog without default buttons
+        val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
-            .setPositiveButton("Submit") {dialog, which ->
-                val amount = input.text.toString()
-                if (amount.isNotEmpty()) {
-                    askVendor()
-                }
-            }
-            .setNegativeButton("Cancel") {dialog, which ->
+            .create()
+
+        dialog.show()
+
+        // Handle cancel button
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        // Handle confirm button
+        confirmButton.setOnClickListener {
+            val amount = input.text.toString().toIntOrNull()
+
+            if (amount != null && amount > 0) {
+                askVendor()
                 dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Please enter a valid amount", Toast.LENGTH_SHORT).show()
             }
-            .show()
+        }
     }
 
     // Ask for Vendor
     private fun askVendor() {
         val dialogView = layoutInflater.inflate(R.layout.vendor_info, null)
         val listView = dialogView.findViewById<ListView>(R.id.vendorListView)
+        val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
+        val saveButton = dialogView.findViewById<Button>(R.id.saveButton)
 
         val vendors = arrayOf("None","NTW", "K&M", "BFS", "Discount Tire", "Hesselbein", "USAutoforce", "ATD")
 
@@ -321,10 +335,6 @@ class MainActivity : AppCompatActivity() {
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
-            .setPositiveButton("Save") { _, _ ->
-                // Save into database
-            }
-            .setNegativeButton("Cancel", null)
             .create()
 
         dialog.show()
@@ -343,7 +353,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             view?.setBackgroundColor(Color.parseColor("#30000000"))
-            Toast.makeText(this, "Saved: $selectedVendor", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Selected: $selectedVendor", Toast.LENGTH_SHORT).show()
+        }
+
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        saveButton.setOnClickListener {
+            Toast.makeText(this, "Saved to Database", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
         }
     }
 
