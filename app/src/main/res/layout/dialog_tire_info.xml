@@ -11,7 +11,7 @@
         android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="85dp"
-        android:text="Is this information correct?"
+        android:text="@string/barcode_information_title"
         android:textAlignment="center"
         android:textSize="30sp"
         android:textStyle="bold" />
@@ -20,7 +20,7 @@
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"
         android:layout_height="53dp"
-        android:text="Product Title"
+        android:text="@string/product_title"
         android:textSize="18sp"
         android:textStyle="bold"
         android:textAlignment="center" />
@@ -30,13 +30,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Brand:"/>
+        android:text="@string/brand_value"/>
 
     <TextView
         android:id="@+id/tvSize"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Size: " />
+        android:text="@string/size_value" />
 
 </LinearLayout>

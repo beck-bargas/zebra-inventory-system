@@ -7,4 +7,10 @@
     <string name="waiting_for_scan">Waiting for scan…</string>
     <string name="clear_input">Clear</string>
     <string name="nix_s_auto_tire_service_logo"><![CDATA[Nix\'s Auto & Tire Service Logo]]></string>
+    <string name="barcode_information_title">Is this information correct?</string>
+    <string name="product_title">Product Title</string>
+    <string name="brand_value">Brand:</string>
+    <string name="size_value">Size:</string>
+    <string name="amount">Amount</string>
+    <string name="tire_amount_title">How many tires?</string>
 </resources>

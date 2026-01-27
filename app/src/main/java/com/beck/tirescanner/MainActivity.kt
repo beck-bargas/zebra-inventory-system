@@ -1,12 +1,12 @@
 package com.beck.tirescanner
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
-import android.text.InputType
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
@@ -14,9 +14,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.beck.tirescanner.R
-import com.beck.tirescanner.models.BarcodeResponse
-import com.beck.tirescanner.models.Product
 import com.beck.tirescanner.network.RetrofitClient
 import kotlinx.coroutines.launch
 
@@ -70,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         handleIntent(intent)
     }
 
+    // Handle intent if launched by DataWedge
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == "com.beck.tirescanner.SCAN") {
             val barcode = intent.getStringExtra("com.symbol.datawedge.data_string")
@@ -91,6 +89,7 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(localBarcodeReceiver, filter, RECEIVER_NOT_EXPORTED)
         } else {
+            @SuppressLint("UnspecifiedRegisterReceiverFlag")
             registerReceiver(localBarcodeReceiver, filter)
         }
     }
@@ -154,11 +153,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendBarcodeToAPI(barcode: String, barcodeType: String) {
-        // Show loading
-        runOnUiThread {
-            responseText.text = "Sending to API..."
-        }
-
         // Make API call
         lifecycleScope.launch {
             try {
@@ -170,6 +164,7 @@ class MainActivity : AppCompatActivity() {
                 if (response.products.isNotEmpty()) {
                     val product = response.products[0]
 
+                    // Show product info
                     val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)
 
                     dialogView.findViewById<TextView>(R.id.tvTitle).text = "${product.title}"
@@ -201,10 +196,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Ask for amount
     private fun askAmount() {
         val dialogView = layoutInflater.inflate(R.layout.tire_amount, null)
-        dialogView.findViewById<TextView>(R.id.etTitle).text = "How many Tires?"
-
         val input = dialogView.findViewById<EditText>(R.id.etAmount)
 
         AlertDialog.Builder(this@MainActivity)
