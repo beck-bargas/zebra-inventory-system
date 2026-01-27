@@ -5,8 +5,12 @@ data class BarcodeResponse(
 )
 
 data class Product(
-    val title: String,
-    val size: String,
-    val brand: String,
-    val images: List<String>
-)
+    val title: String? = null,
+    val size: String? = null,
+    val brand: String? = null,
+    val images: List<String>? = null
+) {
+    fun hasBrandAndSize(): Boolean {
+        return !brand.isNullOrEmpty() && !size.isNullOrEmpty()
+    }
+}

@@ -8,14 +8,18 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.beck.tirescanner.models.Product
 import com.beck.tirescanner.network.RetrofitClient
+import com.beck.tirescanner.utils.TireSizeTextWatcher
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
 
@@ -169,9 +173,12 @@ class MainActivity : AppCompatActivity() {
                     // Show product info
                     val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)
                     val imageView = dialogView.findViewById<ImageView>(R.id.tireImage)
+                    val yesButton = dialogView.findViewById<Button>(R.id.yesButton)
+                    val noButton = dialogView.findViewById<Button>(R.id.noButton)
 
                     // Set image in ImageView
-                    if (product.images.isNotEmpty()) {
+                    val imageUrl = product.images?.firstOrNull()
+                    if (imageUrl != null) {
                         Glide.with(this@MainActivity)
                             .load(product.images[0])
                             .into(imageView)
@@ -184,17 +191,21 @@ class MainActivity : AppCompatActivity() {
                     dialogView.findViewById<TextView>(R.id.tvBrand).text = "Brand: ${product.brand}"
 
 
-                    AlertDialog.Builder(this@MainActivity)
+                    val dialog = AlertDialog.Builder(this@MainActivity)
                         .setView(dialogView)
-                        .setPositiveButton("Yes") {dialog, which ->
-                            dialog.dismiss()
-                            askAmount()
-                        }
-                        .setNegativeButton("No") {dialog, which ->
-                            dialog.dismiss()
-                        }
-                        .show()
+                        .create()
 
+                    yesButton.setOnClickListener {
+                        dialog.dismiss()
+                        askAmount()
+                    }
+
+                    noButton.setOnClickListener {
+                        dialog.dismiss()
+                        showManualEntryDialog(product)
+                    }
+
+                    dialog.show()
                 } else {
                     runOnUiThread {
                         responseText.text = "No product found for barcode: $barcode"
@@ -206,6 +217,71 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun showManualEntryDialog(product: Product?) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_manual_entry, null)
+
+        val brandInput = dialogView.findViewById<EditText>(R.id.brandInput)
+        val tirePrefixSpinner = dialogView.findViewById<Spinner>(R.id.tirePrefixSpinner)
+        val tireSizeInput = dialogView.findViewById<EditText>(R.id.tireSizeInput)
+        val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
+        val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
+
+        // Setup spinner with tire prefixes
+        val prefixes = arrayOf("None", "P", "LT", "ST", "T")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, prefixes)
+        tirePrefixSpinner.adapter = adapter
+
+        // Add TextWatcher for auto-formatting
+        tireSizeInput.addTextChangedListener(TireSizeTextWatcher(tireSizeInput))
+
+        // Pre-fill if API had partial data
+        if (product != null) {
+            brandInput.setText(product.brand.orEmpty())
+
+            // Try to parse prefix from size if it exists
+            val sizeWithPrefix = product.size.orEmpty()
+            if (sizeWithPrefix.startsWith("P ")) {
+                tirePrefixSpinner.setSelection(1)
+                tireSizeInput.setText(sizeWithPrefix.substring(2))
+            } else if (sizeWithPrefix.startsWith("LT ")) {
+                tirePrefixSpinner.setSelection(2)
+                tireSizeInput.setText(sizeWithPrefix.substring(3))
+            } else {
+                tireSizeInput.setText(sizeWithPrefix)
+            }
+        }
+
+        // Create dialog without default buttons
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Enter Tire Information")
+            .setView(dialogView)
+            .create()
+
+        // Setup custom button clicks
+        cancelButton.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        confirmButton.setOnClickListener {
+            val brand = brandInput.text.toString()
+            val prefix = tirePrefixSpinner.selectedItem.toString()
+            val sizeNumbers = tireSizeInput.text.toString()
+
+            val fullSize = if (prefix == "None") {
+                sizeNumbers
+            } else {
+                "$prefix $sizeNumbers"
+            }
+
+            if (brand.isNotEmpty() && sizeNumbers.isNotEmpty()) {
+                askAmount()
+                dialog.dismiss()
+            }
+        }
+
+        dialog.show()
     }
 
     // Ask for amount
