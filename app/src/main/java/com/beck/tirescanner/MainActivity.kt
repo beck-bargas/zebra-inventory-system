@@ -6,8 +6,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -167,13 +169,25 @@ class MainActivity : AppCompatActivity() {
 
                 if (response.products.isNotEmpty()) {
                     val product = response.products[0]
-                    runOnUiThread {
-                        responseText.text = """
-                        Product: ${product.title}
-                        Brand: ${product.brand}
-                        Size: ${product.size}
-                    """.trimIndent()
-                    }
+
+                    val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)
+
+                    dialogView.findViewById<TextView>(R.id.tvTitle).text = "${product.title}"
+                    dialogView.findViewById<TextView>(R.id.tvSize).text = "Size: ${product.size}"
+                    dialogView.findViewById<TextView>(R.id.tvBrand).text = "Brand: ${product.brand}"
+
+
+                    AlertDialog.Builder(this@MainActivity)
+                        .setView(dialogView)
+                        .setPositiveButton("Yes") {dialog, which ->
+                            dialog.dismiss()
+                            askAmount()
+                        }
+                        .setNegativeButton("No") {dialog, which ->
+                            dialog.dismiss()
+                        }
+                        .show()
+
                 } else {
                     runOnUiThread {
                         responseText.text = "No product found for barcode: $barcode"
@@ -187,6 +201,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun askAmount() {
+        val dialogView = layoutInflater.inflate(R.layout.tire_amount, null)
+        dialogView.findViewById<TextView>(R.id.etTitle).text = "How many Tires?"
+
+        val input = dialogView.findViewById<EditText>(R.id.etAmount)
+
+        AlertDialog.Builder(this@MainActivity)
+
+            .setView(dialogView)
+            .setPositiveButton("Submit") {dialog, which ->
+                val amount = input.text.toString()
+                if (amount.isNotEmpty()) {
+                    dialog.dismiss()
+                }
+            }
+            .setNegativeButton("Cancel") {dialog, which ->
+                dialog.dismiss()
+            }
+            .show()
+    }
     private fun clearDisplay() {
         barcodeText.text = "No barcode scanned"
         responseText.text = "Waiting for scan..."
