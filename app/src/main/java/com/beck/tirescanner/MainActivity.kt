@@ -9,8 +9,14 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.beck.tirescanner.R
+import com.beck.tirescanner.models.BarcodeResponse
+import com.beck.tirescanner.models.Product
+import com.beck.tirescanner.network.RetrofitClient
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -149,6 +155,35 @@ class MainActivity : AppCompatActivity() {
         // Show loading
         runOnUiThread {
             responseText.text = "Sending to API..."
+        }
+
+        // Make API call
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.apiService.getProductInfo(
+                    barcode = barcode,
+                    apiKey = RetrofitClient.API_KEY
+                )
+
+                if (response.products.isNotEmpty()) {
+                    val product = response.products[0]
+                    runOnUiThread {
+                        responseText.text = """
+                        Product: ${product.title}
+                        Brand: ${product.brand}
+                        Size: ${product.size}
+                    """.trimIndent()
+                    }
+                } else {
+                    runOnUiThread {
+                        responseText.text = "No product found for barcode: $barcode"
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    responseText.text = "Error: ${e.message}"
+                }
+            }
         }
     }
 

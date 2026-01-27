@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
 }
@@ -13,7 +15,16 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        val properties = Properties()
+        properties.load(project.rootProject.file("local.properties").inputStream())
+
+        buildConfigField("String", "BARCODE_API_KEY", "\"${properties.getProperty("BARCODE_API_KEY")}\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -45,6 +56,11 @@ dependencies {
 
     // Coroutines for async operations
     implementation(libs.kotlinx.coroutines.android)
+
+    // HTTP API
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+    implementation("com.google.code.gson:gson:2.13.2")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
