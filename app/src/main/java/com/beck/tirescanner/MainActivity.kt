@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -12,8 +13,10 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.ListView
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -229,7 +232,7 @@ class MainActivity : AppCompatActivity() {
         val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
 
         // Setup spinner with tire prefixes
-        val prefixes = arrayOf("None", "P", "LT", "ST", "T")
+        val prefixes = arrayOf("None", "P", "LT", "ST")
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, prefixes)
         tirePrefixSpinner.adapter = adapter
 
@@ -295,7 +298,7 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Submit") {dialog, which ->
                 val amount = input.text.toString()
                 if (amount.isNotEmpty()) {
-                    dialog.dismiss()
+                    askVendor()
                 }
             }
             .setNegativeButton("Cancel") {dialog, which ->
@@ -303,6 +306,47 @@ class MainActivity : AppCompatActivity() {
             }
             .show()
     }
+
+    // Ask for Vendor
+    private fun askVendor() {
+        val dialogView = layoutInflater.inflate(R.layout.vendor_info, null)
+        val listView = dialogView.findViewById<ListView>(R.id.vendorListView)
+
+        val vendors = arrayOf("None","NTW", "K&M", "BFS", "Discount Tire", "Hesselbein", "USAutoforce", "ATD")
+
+        var selectedVendor: String = "None"  // Default to "None"
+
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, vendors)
+        listView.adapter = adapter
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setPositiveButton("Save") { _, _ ->
+                // Save into database
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        dialog.show()
+
+        // Pre-select "None" (position 0) after dialog is shown
+        listView.post {
+            listView.getChildAt(0)?.setBackgroundColor(Color.parseColor("#30000000"))
+        }
+
+        listView.setOnItemClickListener { _, view, position, _ ->
+            selectedVendor = vendors[position]
+
+            // Clear previous selection and highlight new one
+            for (i in 0 until listView.childCount) {
+                listView.getChildAt(i)?.setBackgroundColor(Color.TRANSPARENT)
+            }
+
+            view?.setBackgroundColor(Color.parseColor("#30000000"))
+            Toast.makeText(this, "Saved: $selectedVendor", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun clearDisplay() {
         barcodeText.text = "No barcode scanned"
         responseText.text = "Waiting for scan..."
