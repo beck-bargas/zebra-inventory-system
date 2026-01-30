@@ -62,4 +62,7 @@ dependencies {
 
     // Image Loading from URL
     implementation("com.github.bumptech.glide:glide:5.0.5")
+
+    // Material Design Components
+    implementation("com.google.android.material:material:1.11.0")
 }
