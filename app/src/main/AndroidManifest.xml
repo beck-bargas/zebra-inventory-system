@@ -19,14 +19,30 @@
         android:theme="@style/Theme.BarcodeScannerApp"
         tools:targetApi="31">
 
+        <!-- Preview Activity for testing UI -->
         <activity
-            android:name=".MainActivity"
+            android:name=".PreviewActivity"
             android:exported="true"
-            android:launchMode="singleTop">
+            android:label="UI Preview">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <!-- Main Activity (working app) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:label="Tire Scanner">
+            <!-- Commented out so PreviewActivity launches instead -->
+            <!--
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            -->
 
             <intent-filter>
                 <action android:name="com.beck.tirescanner.SCAN" />
