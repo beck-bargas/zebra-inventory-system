@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity() {
                 Log.d("BarcodeScanner", "MainActivity received: $barcode")
 
                 if (barcode != null) {
-                    handleBarcodeScanned(barcode, barcodeType ?: "Unknown")
+                    handleBarcodeScanned(barcode)
                 }
             }
         }
@@ -87,12 +87,11 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == "com.beck.tirescanner.SCAN") {
             val barcode = intent.getStringExtra("com.symbol.datawedge.data_string")
-            val barcodeType = intent.getStringExtra("com.symbol.datawedge.label_type")
 
             Log.d("BarcodeScanner", "Received via startActivity: $barcode")
 
             if (barcode != null) {
-                handleBarcodeScanned(barcode, barcodeType ?: "Unknown")
+                handleBarcodeScanned(barcode)
             }
         }
     }
@@ -154,14 +153,14 @@ class MainActivity : AppCompatActivity() {
         sendBroadcast(profileIntent)
     }
 
-    private fun handleBarcodeScanned(barcode: String, barcodeType: String) {
+    private fun handleBarcodeScanned(barcode: String) {
         runOnUiThread {
             barcodeText.text = barcode
         }
-        sendBarcodeToAPI(barcode, barcodeType)
+        sendBarcodeToAPI(barcode)
     }
 
-    private fun sendBarcodeToAPI(barcode: String, barcodeType: String) {
+    private fun sendBarcodeToAPI(barcode: String) {
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.apiService.getProductInfo(
@@ -172,22 +171,36 @@ class MainActivity : AppCompatActivity() {
                 if (response.products.isNotEmpty()) {
                     val product = response.products[0]
 
-                    // Check if tire already exists in database
-                    val existingTire = tireRepository.getTireByDetails(
-                        barcode,
-                        product.brand,
-                        product.size
-                    )
+                    // Get the scan mode
+                    val mode = intent.getStringExtra("MODE") ?: "IN"
 
-                    if (existingTire != null) {
-                        showExistingTireDialog(existingTire, product, barcode)
+                    if (mode == "IN") {
+                        // IN MODE: Always show confirmation → quantity → vendor
+                        // Don't check if it exists, just add more
+                        runOnUiThread {
+                            showConfirmationDialog(product, barcode)
+                        }
                     } else {
-                        showConfirmationDialog(product, barcode)
+                        // OUT MODE: Check if exists, then remove
+                        val existingTire = tireRepository.getTireByDetails(
+                            barcode,
+                            product.brand,
+                            product.size
+                        )
+
+                        if (existingTire != null) {
+                            runOnUiThread {
+                                showExistingTireDialog(existingTire, product, barcode)
+                            }
+                        } else {
+                            runOnUiThread {
+                                Toast.makeText(this@MainActivity, "Tire not in inventory", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }
                 } else {
                     runOnUiThread {
                         responseText.text = "No product found for barcode: $barcode"
-                        // Show manual entry with empty product
                         showManualEntryDialog(barcode, null)
                     }
                 }
@@ -481,25 +494,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveTireToInventory(product: Product, barcode: String, quantity: Int, vendor: String?) {
+        // Check if tire exists
         val existingTire = tireRepository.getTireByDetails(barcode, product.brand, product.size)
 
         if (existingTire != null) {
-            tireRepository.increaseQuantity(existingTire.id, quantity)
-            Toast.makeText(this, "Added $quantity to existing inventory. Total: ${existingTire.quantity + quantity}", Toast.LENGTH_LONG).show()
+            // Tire exists - just add to existing quantity
+            val success = tireRepository.increaseQuantity(existingTire.id, quantity)
+            if (success) {
+                val newTotal = existingTire.quantity + quantity
+                Toast.makeText(this, "Added $quantity tires. Total: $newTotal", Toast.LENGTH_LONG).show()
+            }
         } else {
+            // New tire - insert
             val id = tireRepository.insertTire(product, barcode, quantity, vendor)
-
             if (id > 0) {
-                Toast.makeText(this, "New tire saved! Quantity: $quantity", Toast.LENGTH_LONG).show()
-
-                // LOG ALL TIRES IN DATABASE
-                Log.d("Database", "=== ALL TIRES IN DATABASE ===")
-                val allTires = tireRepository.getAllTires()
-                Log.d("Database", "Total entries: ${allTires.size}")
-                allTires.forEach { tire ->
-                    Log.d("Database", "ID: ${tire.id}, Brand: ${tire.brand}, Size: ${tire.size}, Qty: ${tire.quantity}, Vendor: ${tire.vendor}")
-                }
-                Log.d("Database", "=== END ===")
+                Toast.makeText(this, "Added $quantity new tires", Toast.LENGTH_LONG).show()
             } else {
                 Toast.makeText(this, "Error saving tire", Toast.LENGTH_SHORT).show()
             }
