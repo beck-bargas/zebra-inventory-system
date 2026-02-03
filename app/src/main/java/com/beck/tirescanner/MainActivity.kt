@@ -273,8 +273,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             dialogView.findViewById<TextView>(R.id.tvTitle).text = "${product.title}"
-            dialogView.findViewById<TextView>(R.id.tvSize).text = "Size: ${product.size}"
-            dialogView.findViewById<TextView>(R.id.tvBrand).text = "Brand: ${product.brand}"
+            dialogView.findViewById<TextView>(R.id.tvSize).text = "${product.size}"
+            dialogView.findViewById<TextView>(R.id.tvBrand).text = "${product.brand}"
 
             val dialog = AlertDialog.Builder(this@MainActivity)
                 .setView(dialogView)
