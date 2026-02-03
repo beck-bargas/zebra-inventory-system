@@ -44,8 +44,8 @@ class HomeActivity : AppCompatActivity() {
 
         // View Inventory button
         findViewById<Button>(R.id.viewInventoryButton).setOnClickListener {
-            // TODO: Show inventory list
-        }
+            val intent = Intent(this, InventoryActivity::class.java)
+            startActivity(intent)        }
     }
 
     override fun onResume() {

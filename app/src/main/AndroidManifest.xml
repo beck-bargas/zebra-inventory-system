@@ -39,6 +39,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <!-- InventoryActivity = Inventory screen -->
+        <activity
+            android:name=".InventoryActivity"
+            android:label="Tire Inventory"
+            android:parentActivityName=".HomeActivity" />
     </application>
 
 </manifest>
