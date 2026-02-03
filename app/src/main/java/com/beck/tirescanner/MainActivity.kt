@@ -224,21 +224,9 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                     } else {
-                        // OUT MODE: Check if exists, then remove
-                        val existingTire = tireRepository.getTireByDetails(
-                            barcode,
-                            finalProduct.brand,
-                            finalProduct.size
-                        )
-
-                        if (existingTire != null) {
-                            runOnUiThread {
-                                showExistingTireDialog(existingTire, finalProduct, barcode)
-                            }
-                        } else {
-                            runOnUiThread {
-                                Toast.makeText(this@MainActivity, "Tire not in inventory", Toast.LENGTH_SHORT).show()
-                            }
+                        // OUT MODE: Show confirmation dialog (will handle if not in inventory)
+                        runOnUiThread {
+                            showConfirmationDialog(finalProduct, barcode)
                         }
                     }
                 } else {
@@ -255,12 +243,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     private fun showConfirmationDialog(product: Product, barcode: String) {
         runOnUiThread {
             val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)
             val imageView = dialogView.findViewById<ImageView>(R.id.tireImage)
+            val titleView = dialogView.findViewById<TextView>(R.id.textView)
             val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
             val editButton = dialogView.findViewById<Button>(R.id.editButton)
+
+            // Get the scan mode
+            val mode = intent.getStringExtra("MODE") ?: "IN"
+
+            titleView.text = "Verify Tire Information"
+
+            confirmButton.text = if (mode == "IN") "Add" else "Remove"
 
             // Set image in ImageView
             val imageUrl = product.images?.firstOrNull()
@@ -273,8 +270,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             dialogView.findViewById<TextView>(R.id.tvTitle).text = "${product.title}"
-            dialogView.findViewById<TextView>(R.id.tvSize).text = "${product.size}"
-            dialogView.findViewById<TextView>(R.id.tvBrand).text = "${product.brand}"
+            dialogView.findViewById<TextView>(R.id.tvSize).text = product.size
+            dialogView.findViewById<TextView>(R.id.tvBrand).text = product.brand
 
             val dialog = AlertDialog.Builder(this@MainActivity)
                 .setView(dialogView)
@@ -282,7 +279,12 @@ class MainActivity : AppCompatActivity() {
 
             confirmButton.setOnClickListener {
                 dialog.dismiss()
-                askAmount(product, barcode)
+                if (mode == "IN") {
+                    askAmount(product, barcode)
+                } else {
+                    // OUT mode - go straight to quantity removal
+                    handleOutMode(product, barcode)
+                }
             }
 
             editButton.setOnClickListener {
@@ -291,6 +293,22 @@ class MainActivity : AppCompatActivity() {
             }
 
             dialog.show()
+        }
+    }
+
+    private fun handleOutMode(product: Product, barcode: String) {
+        val existingTire = tireRepository.getTireByDetails(
+            barcode,
+            product.brand,
+            product.size
+        )
+
+        if (existingTire != null) {
+            // Tire exists - ask how many to remove
+            askQuantityToRemove(existingTire)
+        } else {
+            // Not in inventory
+            Toast.makeText(this, "Tire not found in inventory", Toast.LENGTH_SHORT).show()
         }
     }
 
