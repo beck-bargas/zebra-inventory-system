@@ -2,6 +2,9 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.BarcodeScannerApp" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">#C11236</item>
+        <item name="colorPrimary">@color/blue</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorOnSurface">@color/black</item>
     </style>
     <style name="Theme.BarcodeScannerApp" parent="Base.Theme.BarcodeScannerApp" />
 </resources>
