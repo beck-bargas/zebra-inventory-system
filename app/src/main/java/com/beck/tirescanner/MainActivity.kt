@@ -163,34 +163,77 @@ class MainActivity : AppCompatActivity() {
     private fun sendBarcodeToAPI(barcode: String) {
         lifecycleScope.launch {
             try {
+                // FIRST: Check if tire exists in database
+                val existingTireInDb = tireRepository.getTireByBarcode(barcode)
+
                 val response = RetrofitClient.apiService.getProductInfo(
                     barcode = barcode,
                     apiKey = RetrofitClient.API_KEY
                 )
 
-                if (response.products.isNotEmpty()) {
-                    val product = response.products[0]
+                val product = if (response.products.isNotEmpty()) {
+                    response.products[0]
+                } else {
+                    // No API result - check database fallback
+                    if (existingTireInDb != null) {
+                        Product(
+                            title = "",
+                            brand = existingTireInDb.brand,
+                            size = existingTireInDb.size,
+                            images = null,
+                            barcode = barcode
+                        )
+                    } else {
+                        null
+                    }
+                }
+
+                if (product != null) {
+                    // If API missing brand/size, use database info if available
+                    val finalProduct = if (!product.hasBrandAndSize() && existingTireInDb != null) {
+                        Product(
+                            title = product.title,
+                            brand = product.brand?.takeIf { it.isNotEmpty() } ?: existingTireInDb.brand,
+                            size = product.size?.takeIf { it.isNotEmpty() } ?: existingTireInDb.size,
+                            images = product.images,
+                            barcode = barcode
+                        )
+                    } else {
+                        product
+                    }
 
                     // Get the scan mode
                     val mode = intent.getStringExtra("MODE") ?: "IN"
 
                     if (mode == "IN") {
-                        // IN MODE: Always show confirmation → quantity → vendor
-                        // Don't check if it exists, just add more
-                        runOnUiThread {
-                            showConfirmationDialog(product, barcode)
+                        // Check if brand/size is missing
+                        if (!finalProduct.hasBrandAndSize()) {
+                            runOnUiThread {
+                                val missingFields = finalProduct.getMissingFields()
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Could not detect $missingFields",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                showManualEntryDialog(barcode, finalProduct)
+                            }
+                        } else {
+                            // IN MODE: Show confirmation dialog
+                            runOnUiThread {
+                                showConfirmationDialog(finalProduct, barcode)
+                            }
                         }
                     } else {
                         // OUT MODE: Check if exists, then remove
                         val existingTire = tireRepository.getTireByDetails(
                             barcode,
-                            product.brand,
-                            product.size
+                            finalProduct.brand,
+                            finalProduct.size
                         )
 
                         if (existingTire != null) {
                             runOnUiThread {
-                                showExistingTireDialog(existingTire, product, barcode)
+                                showExistingTireDialog(existingTire, finalProduct, barcode)
                             }
                         } else {
                             runOnUiThread {
@@ -201,6 +244,7 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     runOnUiThread {
                         responseText.text = "No product found for barcode: $barcode"
+                        Toast.makeText(this@MainActivity, "Could not detect brand and size", Toast.LENGTH_SHORT).show()
                         showManualEntryDialog(barcode, null)
                     }
                 }
@@ -211,7 +255,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
     private fun showConfirmationDialog(product: Product, barcode: String) {
         runOnUiThread {
             val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)

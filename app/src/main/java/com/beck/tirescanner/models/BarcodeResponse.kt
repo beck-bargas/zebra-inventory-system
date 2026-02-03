@@ -17,4 +17,11 @@ data class Product(
     fun hasBrandAndSize(): Boolean {
         return !brand.isNullOrEmpty() && !size.isNullOrEmpty()
     }
+
+    fun getMissingFields(): String {
+        val missing = mutableListOf<String>()
+        if (brand.isNullOrEmpty()) missing.add("brand")
+        if (size.isNullOrEmpty()) missing.add("size")
+        return missing.joinToString(" and ")
+    }
 }
