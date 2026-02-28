@@ -20,207 +20,202 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <!-- ScrollView so nothing gets cut off on small screens -->
+        <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="20dp">
+            android:fillViewport="true">
 
-            <!-- Logo at top -->
-            <ImageView
-                android:id="@+id/logoImage"
-                android:layout_width="220dp"
-                android:layout_height="115dp"
-                android:layout_marginTop="8dp"
-                android:contentDescription="Nix's Auto and Tire Service Logo"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/logo" />
-
-            <!-- IN and OUT buttons -->
             <LinearLayout
-                android:id="@+id/actionButtonsLayout"
-                android:layout_width="0dp"
-                android:layout_height="210dp"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal"
-                android:weightSum="2"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/logoImage">
-
-                <!-- IN Card Button -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/inCard"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginEnd="10dp"
-                    android:layout_weight="1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    app:cardBackgroundColor="#43A047"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="18dp">
-
-                        <ImageView
-                            android:layout_width="72dp"
-                            android:layout_height="72dp"
-                            android:contentDescription="Receive tires icon"
-                            android:src="@drawable/ic_inbox" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:letterSpacing="0.05"
-                            android:text="IN"
-                            android:textColor="#FFFFFF"
-                            android:textSize="34sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="Receive Tires"
-                            android:textColor="#DCEDC8"
-                            android:textSize="14sp" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- OUT Card Button -->
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/outCard"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="10dp"
-                    android:layout_weight="1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
-                    app:cardBackgroundColor="#E53935"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:padding="18dp">
-
-                        <ImageView
-                            android:layout_width="72dp"
-                            android:layout_height="72dp"
-                            android:contentDescription="Sell tires icon"
-                            android:src="@drawable/ic_outbox" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
-                            android:letterSpacing="0.05"
-                            android:text="OUT"
-                            android:textColor="#FFFFFF"
-                            android:textSize="34sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="Sell Tires"
-                            android:textColor="#FFCDD2"
-                            android:textSize="14sp" />
-
-                    </LinearLayout>
-
-                </com.google.android.material.card.MaterialCardView>
-
-            </LinearLayout>
-
-            <!-- Inventory Stats Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/statsCard"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                app:cardBackgroundColor="#FFFFFF"
-                app:cardCornerRadius="10dp"
-                app:cardElevation="2dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/actionButtonsLayout">
+                android:orientation="vertical"
+                android:padding="20dp">
 
+                <!-- Logo at top -->
+                <ImageView
+                    android:id="@+id/logoImage"
+                    android:layout_width="220dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="20dp"
+                    android:contentDescription="Nix's Auto and Tire Service Logo"
+                    app:srcCompat="@drawable/logo" />
+
+                <!-- IN and OUT buttons -->
                 <LinearLayout
+                    android:id="@+id/actionButtonsLayout"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="18dp">
+                    android:layout_height="190dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2"
+                    android:layout_marginBottom="20dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:letterSpacing="0.05"
-                        android:text="Current Inventory"
-                        android:textColor="#757575"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                    <!-- IN Card Button -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/inCard"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginEnd="10dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        app:cardBackgroundColor="#43A047"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp">
 
-                    <TextView
-                        android:id="@+id/totalTiresText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="247 Total Tires"
-                        android:textColor="#212121"
-                        android:textSize="19sp"
-                        android:textStyle="bold" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="18dp">
 
-                    <TextView
-                        android:id="@+id/uniqueTypesText"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="5dp"
-                        android:text="15 Different Types"
-                        android:textColor="#616161"
-                        android:textSize="15sp" />
+                            <ImageView
+                                android:layout_width="60dp"
+                                android:layout_height="60dp"
+                                android:contentDescription="Receive tires icon"
+                                android:src="@drawable/ic_inbox" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:letterSpacing="0.05"
+                                android:text="IN"
+                                android:textColor="#FFFFFF"
+                                android:textSize="30sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Receive Tires"
+                                android:textColor="#DCEDC8"
+                                android:textSize="13sp" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- OUT Card Button -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/outCard"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        app:cardBackgroundColor="#E53935"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center"
+                            android:orientation="vertical"
+                            android:padding="18dp">
+
+                            <ImageView
+                                android:layout_width="60dp"
+                                android:layout_height="60dp"
+                                android:contentDescription="Sell tires icon"
+                                android:src="@drawable/ic_outbox" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:letterSpacing="0.05"
+                                android:text="OUT"
+                                android:textColor="#FFFFFF"
+                                android:textSize="30sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Sell Tires"
+                                android:textColor="#FFCDD2"
+                                android:textSize="13sp" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
 
                 </LinearLayout>
 
-            </com.google.android.material.card.MaterialCardView>
+                <!-- Inventory Stats Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/statsCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="2dp">
 
-            <!-- View Inventory Button -->
-            <Button
-                android:id="@+id/viewInventoryButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:layout_marginBottom="16dp"
-                android:backgroundTint="#1976D2"
-                android:paddingVertical="14dp"
-                android:text="View Full Inventory"
-                android:textAllCaps="false"
-                android:textColor="#FFFFFF"
-                android:textSize="15sp"
-                app:cornerRadius="8dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/statsCard"
-                app:layout_constraintVertical_bias="0.0" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:letterSpacing="0.05"
+                            android:text="Current Inventory"
+                            android:textColor="#757575"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/totalTiresText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="0 Total Tires"
+                            android:textColor="#212121"
+                            android:textSize="19sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/uniqueTypesText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="0 Different Types"
+                            android:textColor="#616161"
+                            android:textSize="15sp" />
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- View Inventory Button -->
+                <Button
+                    android:id="@+id/viewInventoryButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="#1976D2"
+                    android:paddingVertical="14dp"
+                    android:text="View Full Inventory"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    app:cornerRadius="8dp" />
+
+            </LinearLayout>
+
+        </ScrollView>
 
     </com.google.android.material.card.MaterialCardView>
 
