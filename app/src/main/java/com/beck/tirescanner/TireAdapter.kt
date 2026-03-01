@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.beck.tirescanner.database.TireEntry
 
@@ -36,7 +37,14 @@ class TireAdapter(private var tires: List<TireEntry>) :
     override fun getItemCount() = tires.size
 
     fun updateTires(newTires: List<TireEntry>) {
+        val diffCallback = object : DiffUtil.Callback() {
+            override fun getOldListSize() = tires.size
+            override fun getNewListSize() = newTires.size
+            override fun areItemsTheSame(oldPos: Int, newPos: Int) = tires[oldPos].id == newTires[newPos].id
+            override fun areContentsTheSame(oldPos: Int, newPos: Int) = tires[oldPos] == newTires[newPos]
+        }
+        val diff = DiffUtil.calculateDiff(diffCallback)
         tires = newTires
-        notifyDataSetChanged()
+        diff.dispatchUpdatesTo(this)
     }
 }

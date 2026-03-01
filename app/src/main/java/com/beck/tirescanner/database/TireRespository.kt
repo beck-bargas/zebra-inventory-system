@@ -198,31 +198,6 @@ class TireRepository(context: Context) {
         return tires
     }
 
-    // Get tires by vendor
-    fun getTiresByVendor(vendor: String): List<TireEntry> {
-        val tires = mutableListOf<TireEntry>()
-        val db = dbHelper.readableDatabase
-
-        val cursor = db.query(
-            TireDatabaseHelper.TABLE_TIRES,
-            null,
-            "${TireDatabaseHelper.COLUMN_VENDOR} = ?",
-            arrayOf(vendor),
-            null,
-            null,
-            "${TireDatabaseHelper.COLUMN_DATE_ADDED} DESC"
-        )
-
-        cursor.use {
-            while (it.moveToNext()) {
-                tires.add(cursorToTireEntry(it))
-            }
-        }
-
-        db.close()
-        return tires
-    }
-
     // Search tires by brand or size
     fun searchTires(query: String): List<TireEntry> {
         val tires = mutableListOf<TireEntry>()
@@ -246,18 +221,6 @@ class TireRepository(context: Context) {
 
         db.close()
         return tires
-    }
-
-    // Delete a tire completely
-    fun deleteTire(id: Long): Int {
-        val db = dbHelper.writableDatabase
-        val rowsDeleted = db.delete(
-            TireDatabaseHelper.TABLE_TIRES,
-            "${TireDatabaseHelper.COLUMN_ID} = ?",
-            arrayOf(id.toString())
-        )
-        db.close()
-        return rowsDeleted
     }
 
     // Get total quantity across all tires

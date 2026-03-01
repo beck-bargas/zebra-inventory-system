@@ -27,6 +27,7 @@ import com.beck.tirescanner.network.RetrofitClient
 import com.beck.tirescanner.utils.TireSizeTextWatcher
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
+import androidx.core.graphics.toColorInt
 
 class MainActivity : AppCompatActivity() {
     // Database
@@ -38,15 +39,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var clearButton: Button
 
     // DataWedge configuration
-    private val DATAWEDGE_INTENT_ACTION = "com.beck.tirescanner.SCAN"
-    private val DATAWEDGE_INTENT_CATEGORY = "android.intent.category.DEFAULT"
-
+    companion object {
+        private const val DATAWEDGE_INTENT_ACTION = "com.beck.tirescanner.SCAN"
+        private const val DATAWEDGE_INTENT_CATEGORY = "android.intent.category.DEFAULT"
+    }
     // BroadcastReceiver for DataWedge scans
     private val localBarcodeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.beck.tirescanner.LOCAL_SCAN") {
                 val barcode = intent.getStringExtra("barcode")
-                val barcodeType = intent.getStringExtra("barcode_type")
 
                 if (barcode != null) {
                     handleBarcodeScanned(barcode)
@@ -108,7 +109,7 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         try {
             unregisterReceiver(localBarcodeReceiver)
-        } catch (e: Exception) {
+        } catch (_: IllegalArgumentException) {
             // Receiver wasn't registered
         }
     }
@@ -251,7 +252,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 null
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -320,59 +321,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             // Not in inventory
             Toast.makeText(this, "Tire not found in inventory", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun showExistingTireDialog(existingTire: TireEntry, product: Product, barcode: String) {
-        runOnUiThread {
-            AlertDialog.Builder(this)
-                .setTitle("Tire Already in Inventory")
-                .setMessage("${existingTire.brand} ${existingTire.size}\nCurrent quantity: ${existingTire.quantity}\n\nWhat would you like to do?")
-                .setPositiveButton("Add More") { _, _ ->
-                    askQuantityToAdd(existingTire)
-                }
-                .setNegativeButton("Remove") { _, _ ->
-                    askQuantityToRemove(existingTire)
-                }
-                .setNeutralButton("Cancel", null)
-                .show()
-        }
-    }
-
-    private fun askQuantityToAdd(existingTire: TireEntry) {
-        val dialogView = layoutInflater.inflate(R.layout.tire_amount, null)
-        val input = dialogView.findViewById<EditText>(R.id.etAmount)
-        val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
-        val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
-
-        dialogView.findViewById<TextView>(R.id.etTitle).text = "Add Quantity"
-
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
-
-        dialog.show()
-
-        cancelButton.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        confirmButton.setOnClickListener {
-            val amountToAdd = input.text.toString().toIntOrNull()
-
-            if (amountToAdd != null && amountToAdd > 0) {
-                val success = tireRepository.increaseQuantity(existingTire.id, amountToAdd)
-
-                if (success) {
-                    val newTotal = existingTire.quantity + amountToAdd
-                    Toast.makeText(this, "Added $amountToAdd tires. New total: $newTotal", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(this, "Error adding tires", Toast.LENGTH_SHORT).show()
-                }
-                dialog.dismiss()
-            } else {
-                Toast.makeText(this, "Please enter a valid quantity", Toast.LENGTH_SHORT).show()
-            }
         }
     }
 
@@ -527,7 +475,7 @@ class MainActivity : AppCompatActivity() {
 
         val vendors = arrayOf("None","NTW", "K&M", "BFS", "Discount Tire", "Hesselbein", "USAutoforce", "ATD")
 
-        var selectedVendor: String = "None"
+        var selectedVendor = "None"
 
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, vendors)
         listView.adapter = adapter
@@ -540,7 +488,7 @@ class MainActivity : AppCompatActivity() {
 
         // Pre-select "None"
         listView.post {
-            listView.getChildAt(0)?.setBackgroundColor(Color.parseColor("#30000000"))
+            listView.getChildAt(0)?.setBackgroundColor("#30000000".toColorInt())
         }
 
         listView.setOnItemClickListener { _, view, position, _ ->
@@ -551,7 +499,7 @@ class MainActivity : AppCompatActivity() {
                 listView.getChildAt(i)?.setBackgroundColor(Color.TRANSPARENT)
             }
 
-            view?.setBackgroundColor(Color.parseColor("#30000000"))
+            view?.setBackgroundColor("#30000000".toColorInt())
             Toast.makeText(this, "Selected: $selectedVendor", Toast.LENGTH_SHORT).show()
         }
 

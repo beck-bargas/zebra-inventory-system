@@ -61,8 +61,8 @@ dependencies {
     implementation(libs.gson)
 
     // Image Loading from URL
-    implementation("com.github.bumptech.glide:glide:5.0.5")
+    implementation(libs.glide)
 
     // Material Design Components
-    implementation("com.google.android.material:material:1.11.0")
+    implementation(libs.material)
 }
