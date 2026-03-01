@@ -125,6 +125,19 @@ class TireRepository(context: Context) {
         return db.insert("tires", null, values)
     }
 
+    fun deleteTire(id: Int) {
+        val db = dbHelper.writableDatabase
+        db.delete("tires", "id = ?", arrayOf(id.toString()))
+    }
+
+    fun updateQuantity(id: Int, quantity: Int) {
+        val db = dbHelper.writableDatabase
+        val values = ContentValues().apply {
+            put("quantity", quantity)
+        }
+        db.update("tires", values, "id = ?", arrayOf(id.toString()))
+    }
+
     fun increaseQuantity(id: Int, amount: Int): Boolean {
         val db = dbHelper.writableDatabase
         return db.execSQL("UPDATE tires SET quantity = quantity + ? WHERE id = ?",

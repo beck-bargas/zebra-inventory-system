@@ -8,8 +8,10 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.beck.tirescanner.database.TireEntry
 
-class TireAdapter(private var tires: List<TireEntry>) :
-    RecyclerView.Adapter<TireAdapter.TireViewHolder>() {
+class TireAdapter(
+    private var tires: List<TireEntry>,
+    private val onLongClick: (TireEntry) -> Unit
+) : RecyclerView.Adapter<TireAdapter.TireViewHolder>() {
 
     class TireViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvBrand: TextView = view.findViewById(R.id.tvBrand)
@@ -32,6 +34,11 @@ class TireAdapter(private var tires: List<TireEntry>) :
         holder.tvVendor.text = "Vendor: ${tire.vendor ?: "None"}"
         holder.tvQuantity.text = tire.quantity.toString()
         holder.tvBarcode.text = "Barcode: ${tire.barcode}"
+
+        holder.itemView.setOnLongClickListener {
+            onLongClick(tire)
+            true
+        }
     }
 
     override fun getItemCount() = tires.size
