@@ -48,8 +48,6 @@ class MainActivity : AppCompatActivity() {
                 val barcode = intent.getStringExtra("barcode")
                 val barcodeType = intent.getStringExtra("barcode_type")
 
-                Log.d("BarcodeScanner", "MainActivity received: $barcode")
-
                 if (barcode != null) {
                     handleBarcodeScanned(barcode)
                 }
@@ -88,8 +86,6 @@ class MainActivity : AppCompatActivity() {
         if (intent?.action == "com.beck.tirescanner.SCAN") {
             val barcode = intent.getStringExtra("com.symbol.datawedge.data_string")
 
-            Log.d("BarcodeScanner", "Received via startActivity: $barcode")
-
             if (barcode != null) {
                 handleBarcodeScanned(barcode)
             }
@@ -98,7 +94,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        Log.d("BarcodeScanner", "Registering local receiver")
 
         val filter = IntentFilter("com.beck.tirescanner.LOCAL_SCAN")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -163,28 +158,18 @@ class MainActivity : AppCompatActivity() {
     private fun sendBarcodeToAPI(barcode: String) {
         lifecycleScope.launch {
             try {
-                // FIRST: Check if tire exists in database
+                // Check if tire exists in database
                 val existingTireInDb = tireRepository.getTireByBarcode(barcode)
 
-                val response = RetrofitClient.apiService.getProductInfo(
-                    barcode = barcode,
-                    apiKey = RetrofitClient.API_KEY
-                )
+                // Try Barcode Lookup API
+                var product = tryGetProduct(barcode, existingTireInDb, paid = true)
 
-                val product = if (response.products.isNotEmpty()) {
-                    response.products[0]
-                } else {
-                    // No API result - check database fallback
-                    if (existingTireInDb != null) {
-                        Product(
-                            title = "",
-                            brand = existingTireInDb.brand,
-                            size = existingTireInDb.size,
-                            images = null,
-                            barcode = barcode
-                        )
-                    } else {
-                        null
+                // If no result or missing brand/size, try UPCitemdb free tier
+                if (product == null || !product.hasBrandAndSize()) {
+                    Log.d("BarcodeScanner", "Paid API had no/incomplete result, trying free tier...")
+                    val freeProduct = tryGetProduct(barcode, existingTireInDb, paid = false)
+                    if (freeProduct != null && freeProduct.hasBrandAndSize()) {
+                        product = freeProduct
                     }
                 }
 
@@ -206,7 +191,7 @@ class MainActivity : AppCompatActivity() {
                     val mode = intent.getStringExtra("MODE") ?: "IN"
 
                     if (mode == "IN") {
-                        // Check if brand/size is missing
+                        // Check if brand/size is missing after all fallbacks
                         if (!finalProduct.hasBrandAndSize()) {
                             runOnUiThread {
                                 val missingFields = finalProduct.getMissingFields()
@@ -244,6 +229,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Helper that calls either paid or free endpoint and returns a Product or null
+    private suspend fun tryGetProduct(barcode: String, existingTireInDb: TireEntry?, paid: Boolean): Product? {
+        return try {
+            val products = if (paid) {
+                RetrofitClient.apiService.getProductInfo(barcode, RetrofitClient.API_KEY).toProducts()
+            } else {
+                RetrofitClient.upcApiService.getProductInfo(barcode).toProducts()
+            }
+
+            if (products.isNotEmpty()) {
+                products[0]
+            } else if (existingTireInDb != null && paid) {
+                Product(
+                    title = "",
+                    brand = existingTireInDb.brand,
+                    size = existingTireInDb.size,
+                    images = null,
+                    barcode = barcode
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
     private fun showConfirmationDialog(product: Product, barcode: String) {
         runOnUiThread {
             val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)

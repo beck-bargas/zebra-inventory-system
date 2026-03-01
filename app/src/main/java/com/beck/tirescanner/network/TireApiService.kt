@@ -1,6 +1,6 @@
 package com.beck.tirescanner.network
 
-import com.beck.tirescanner.models.BarcodeResponse
+import com.beck.tirescanner.models.BarcodeLookupResponse
 import retrofit2.http.*
 
 interface TireApiService {
@@ -8,5 +8,5 @@ interface TireApiService {
     suspend fun getProductInfo(
         @Query("barcode") barcode: String,
         @Query("key") apiKey: String
-    ): BarcodeResponse
+    ): BarcodeLookupResponse
 }
