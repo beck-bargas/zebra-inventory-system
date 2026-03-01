@@ -7,7 +7,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.beck.tirescanner.BuildConfig
 import com.beck.tirescanner.database.TireRepository
+import com.beck.tirescanner.network.RetrofitClient
 import com.beck.tirescanner.network.SyncManager
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
@@ -23,8 +25,10 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
+        RetrofitClient.API_KEY = BuildConfig.BARCODE_API_KEY
+
         tireRepository = TireRepository(this)
-        syncManager = SyncManager(this, tireRepository)
+        syncManager = SyncManager(this, tireRepository, BuildConfig.SYNC_TOKEN)
         syncManager.startServer()
 
         totalTiresText = findViewById(R.id.totalTiresText)

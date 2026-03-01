@@ -16,7 +16,8 @@ import java.net.URL
 
 class SyncManager(
     private val context: Context,
-    private val tireRepository: TireRepository
+    private val tireRepository: TireRepository,
+    private val syncToken: String
 ) {
     private val SERVICE_TYPE = "_tirescanner._tcp."
     private val SERVICE_NAME = "TireScannerSync"
@@ -28,24 +29,18 @@ class SyncManager(
     private var registrationListener: NsdManager.RegistrationListener? = null
     private var discoveryListener: NsdManager.DiscoveryListener? = null
 
-    // Start the local HTTP server and register it on the network
     fun startServer() {
-        syncServer = SyncServer(SYNC_PORT, tireRepository)
+        syncServer = SyncServer(SYNC_PORT, tireRepository, syncToken)
         syncServer?.start()
         registerService()
     }
 
     fun stopServer() {
         syncServer?.stop()
-        try {
-            registrationListener?.let { nsdManager.unregisterService(it) }
-        } catch (e: Exception) { }
-        try {
-            discoveryListener?.let { nsdManager.stopServiceDiscovery(it) }
-        } catch (e: Exception) { }
+        try { registrationListener?.let { nsdManager.unregisterService(it) } } catch (e: Exception) { }
+        try { discoveryListener?.let { nsdManager.stopServiceDiscovery(it) } } catch (e: Exception) { }
     }
 
-    // Register this device as a sync service on the local network
     private fun registerService() {
         val serviceInfo = NsdServiceInfo().apply {
             serviceName = SERVICE_NAME
@@ -63,23 +58,31 @@ class SyncManager(
         nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener)
     }
 
-    // Discover other devices and sync with them
     suspend fun discoverAndSync(onResult: (String) -> Unit) {
         withContext(Dispatchers.IO) {
             val foundDevices = mutableListOf<NsdServiceInfo>()
 
             discoveryListener = object : NsdManager.DiscoveryListener {
-                override fun onDiscoveryStarted(type: String) {}
-                override fun onDiscoveryStopped(type: String) {}
-                override fun onStartDiscoveryFailed(type: String, code: Int) {}
+                override fun onDiscoveryStarted(type: String) {
+                    Log.d("SyncManager", "Discovery started")
+                }
+                override fun onDiscoveryStopped(type: String) {
+                    Log.d("SyncManager", "Discovery stopped")
+                }
+                override fun onStartDiscoveryFailed(type: String, code: Int) {
+                    Log.e("SyncManager", "Start discovery failed: $code")
+                }
                 override fun onStopDiscoveryFailed(type: String, code: Int) {}
 
                 override fun onServiceFound(service: NsdServiceInfo) {
+                    Log.d("SyncManager", "Service found: ${service.serviceName} type: ${service.serviceType}")
                     if (service.serviceType.contains("tirescanner")) {
                         nsdManager.resolveService(service, object : NsdManager.ResolveListener {
-                            override fun onResolveFailed(info: NsdServiceInfo, code: Int) {}
+                            override fun onResolveFailed(info: NsdServiceInfo, code: Int) {
+                                Log.e("SyncManager", "Resolve failed: $code")
+                            }
                             override fun onServiceResolved(info: NsdServiceInfo) {
-                                // Skip ourselves
+                                Log.d("SyncManager", "Resolved: ${info.host}:${info.port}")
                                 if (!isLocalAddress(info.host)) {
                                     foundDevices.add(info)
                                 }
@@ -88,24 +91,24 @@ class SyncManager(
                     }
                 }
 
-                override fun onServiceLost(service: NsdServiceInfo) {}
+                override fun onServiceLost(service: NsdServiceInfo) {
+                    Log.d("SyncManager", "Service lost: ${service.serviceName}")
+                }
             }
 
             nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+            Thread.sleep(5000)
 
-            // Wait a few seconds for discovery
-            Thread.sleep(3000)
+            try { nsdManager.stopServiceDiscovery(discoveryListener) } catch (e: Exception) { }
+            Thread.sleep(1000) // wait for pending resolves to finish
 
-            try {
-                nsdManager.stopServiceDiscovery(discoveryListener)
-            } catch (e: Exception) { }
+            Log.d("SyncManager", "Found ${foundDevices.size} device(s)")
 
             if (foundDevices.isEmpty()) {
                 withContext(Dispatchers.Main) { onResult("No other device found on network") }
                 return@withContext
             }
 
-            // Sync with each found device
             var syncCount = 0
             for (device in foundDevices) {
                 val success = syncWithDevice(device.host, device.port)
@@ -113,32 +116,28 @@ class SyncManager(
             }
 
             withContext(Dispatchers.Main) {
-                if (syncCount > 0) {
-                    onResult("Synced with $syncCount device(s)")
-                } else {
-                    onResult("Found device but sync failed")
-                }
+                if (syncCount > 0) onResult("Synced with $syncCount device(s)")
+                else onResult("Found device but sync failed")
             }
         }
     }
-
-    // Push our inventory to the other device and pull theirs
     private fun syncWithDevice(host: InetAddress, port: Int): Boolean {
         return try {
             val baseUrl = "http://${host.hostAddress}:$port"
-            android.util.Log.d("SyncManager", "Attempting sync with: $baseUrl")
+            Log.d("SyncManager", "Attempting sync with: $baseUrl")
 
             val getUrl = URL("$baseUrl/inventory")
             val getConn = getUrl.openConnection() as HttpURLConnection
             getConn.requestMethod = "GET"
+            getConn.setRequestProperty("x-sync-token", syncToken)
             getConn.connectTimeout = 3000
             getConn.readTimeout = 3000
 
             val responseCode = getConn.responseCode
-            android.util.Log.d("SyncManager", "Response code: $responseCode")
+            Log.d("SyncManager", "GET response code: $responseCode")
 
             val remoteJson = getConn.inputStream.bufferedReader().readText()
-            android.util.Log.d("SyncManager", "Remote inventory: $remoteJson")
+            Log.d("SyncManager", "Remote inventory: $remoteJson")
             getConn.disconnect()
 
             val remoteTires = gson.fromJson(remoteJson, Array<com.beck.tirescanner.database.TireEntry>::class.java).toList()
@@ -146,12 +145,14 @@ class SyncManager(
 
             val ourTires = tireRepository.getAllTires()
             val ourJson = gson.toJson(ourTires)
+            Log.d("SyncManager", "Sending our inventory: $ourJson")
 
             val postUrl = URL("$baseUrl/sync")
             val postConn = postUrl.openConnection() as HttpURLConnection
             postConn.requestMethod = "POST"
             postConn.doOutput = true
             postConn.setRequestProperty("Content-Type", "application/json")
+            postConn.setRequestProperty("x-sync-token", syncToken)
             postConn.connectTimeout = 3000
             postConn.readTimeout = 3000
 
@@ -160,14 +161,15 @@ class SyncManager(
             writer.flush()
             writer.close()
 
-            postConn.responseCode == 200
+            val postCode = postConn.responseCode
+            Log.d("SyncManager", "POST response code: $postCode")
+
+            postCode == 200
         } catch (e: Exception) {
-            android.util.Log.e("SyncManager", "Sync error: ${e.message}", e)
+            Log.e("SyncManager", "Sync error: ${e.message}", e)
             false
         }
     }
-
-    // Check if an address belongs to this device (so we don't sync with ourselves)
     private fun isLocalAddress(address: InetAddress): Boolean {
         return try {
             NetworkInterface.getNetworkInterfaces().toList().any { iface ->
@@ -177,5 +179,4 @@ class SyncManager(
             false
         }
     }
-
 }

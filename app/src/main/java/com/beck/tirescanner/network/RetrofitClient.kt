@@ -1,12 +1,11 @@
 package com.beck.tirescanner.network
 
-import com.beck.tirescanner.BuildConfig
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    const val API_KEY = BuildConfig.BARCODE_API_KEY
+    var API_KEY: String = ""
 
     val apiService: TireApiService by lazy {
         Retrofit.Builder()

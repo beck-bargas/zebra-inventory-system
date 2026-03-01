@@ -19,6 +19,7 @@ android {
         properties.load(project.rootProject.file("local.properties").inputStream())
 
         buildConfigField("String", "BARCODE_API_KEY", "\"${properties.getProperty("BARCODE_API_KEY")}\"")
+        buildConfigField("String", "SYNC_TOKEN", "\"${properties.getProperty("SYNC_TOKEN")}\"")
     }
 
     buildFeatures {
