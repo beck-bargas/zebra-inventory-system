@@ -4,10 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.beck.tirescanner.BuildConfig
 import com.beck.tirescanner.database.TireRepository
 import com.beck.tirescanner.network.RetrofitClient
 import com.beck.tirescanner.network.SyncManager
@@ -69,15 +67,11 @@ class HomeActivity : AppCompatActivity() {
 
     private fun autoSync() {
         lifecycleScope.launch {
-            syncManager.discoverAndSync { message ->
-                runOnUiThread {
-                    Toast.makeText(this@HomeActivity, message, Toast.LENGTH_LONG).show()
-                }
+            syncManager.discoverAndSync {
                 updateInventoryStats()
             }
         }
     }
-
     private fun updateInventoryStats() {
         val totalTires = tireRepository.getTotalTireCount()
         val uniqueTypes = tireRepository.getAllTires().size
