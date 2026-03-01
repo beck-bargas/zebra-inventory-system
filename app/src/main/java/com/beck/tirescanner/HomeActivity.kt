@@ -4,13 +4,18 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.beck.tirescanner.database.TireRepository
+import com.beck.tirescanner.network.SyncManager
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.launch
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var tireRepository: TireRepository
+    private lateinit var syncManager: SyncManager
     private lateinit var totalTiresText: TextView
     private lateinit var uniqueTypesText: TextView
 
@@ -18,14 +23,13 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        // Initialize repository
         tireRepository = TireRepository(this)
+        syncManager = SyncManager(this, tireRepository)
+        syncManager.startServer()
 
-        // Initialize UI
         totalTiresText = findViewById(R.id.totalTiresText)
         uniqueTypesText = findViewById(R.id.uniqueTypesText)
 
-        // Update stats
         updateInventoryStats()
 
         // IN button - opens MainActivity in IN mode
@@ -42,16 +46,32 @@ class HomeActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // View Inventory button
         findViewById<Button>(R.id.viewInventoryButton).setOnClickListener {
             val intent = Intent(this, InventoryActivity::class.java)
-            startActivity(intent)        }
+            startActivity(intent)
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        // Update stats when coming back from scanner
         updateInventoryStats()
+        autoSync()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        syncManager.stopServer()
+    }
+
+    private fun autoSync() {
+        lifecycleScope.launch {
+            syncManager.discoverAndSync { message ->
+                runOnUiThread {
+                    Toast.makeText(this@HomeActivity, message, Toast.LENGTH_LONG).show()
+                }
+                updateInventoryStats()
+            }
+        }
     }
 
     private fun updateInventoryStats() {

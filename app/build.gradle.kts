@@ -65,4 +65,7 @@ dependencies {
 
     // Material Design Components
     implementation(libs.material)
+
+    // HTTP server for device sync
+    implementation(libs.nanohttpd)
 }

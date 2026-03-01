@@ -6,6 +6,7 @@ appcompat = "1.7.1"
 kotlinxCoroutinesAndroid = "1.10.2"
 material = "1.13.0"
 constraintlayout = "2.2.1"
+nanohttpd = "2.3.1"
 retrofit = "3.0.0"
 
 [libraries]
@@ -17,6 +18,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 
 [plugins]
