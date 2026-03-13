@@ -459,61 +459,15 @@ class MainActivity : AppCompatActivity() {
             val amount = input.text.toString().toIntOrNull()
 
             if (amount != null && amount > 0) {
-                askVendor(product, barcode, amount)
                 dialog.dismiss()
+                saveTireToInventory(product, barcode, amount)
             } else {
                 Toast.makeText(this, "Please enter a valid amount", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun askVendor(product: Product, barcode: String, quantity: Int) {
-        val dialogView = layoutInflater.inflate(R.layout.vendor_info, null)
-        val listView = dialogView.findViewById<ListView>(R.id.vendorListView)
-        val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
-        val saveButton = dialogView.findViewById<Button>(R.id.saveButton)
-
-        val vendors = arrayOf("None","NTW", "K&M", "BFS", "Discount Tire", "Hesselbein", "USAutoforce", "ATD")
-
-        var selectedVendor = "None"
-
-        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, vendors)
-        listView.adapter = adapter
-
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
-
-        dialog.show()
-
-        // Pre-select "None"
-        listView.post {
-            listView.getChildAt(0)?.setBackgroundColor("#30000000".toColorInt())
-        }
-
-        listView.setOnItemClickListener { _, view, position, _ ->
-            selectedVendor = vendors[position]
-
-            // Clear previous selection and highlight new one
-            for (i in 0 until listView.childCount) {
-                listView.getChildAt(i)?.setBackgroundColor(Color.TRANSPARENT)
-            }
-
-            view?.setBackgroundColor("#30000000".toColorInt())
-            Toast.makeText(this, "Selected: $selectedVendor", Toast.LENGTH_SHORT).show()
-        }
-
-        cancelButton.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        saveButton.setOnClickListener {
-            saveTireToInventory(product, barcode, quantity, selectedVendor)
-            dialog.dismiss()
-        }
-    }
-
-    private fun saveTireToInventory(product: Product, barcode: String, quantity: Int, vendor: String?) {
+    private fun saveTireToInventory(product: Product, barcode: String, quantity: Int) {
         // Check if tire exists
         val existingTire = tireRepository.getTireByDetails(barcode, product.brand, product.size)
 
@@ -526,7 +480,7 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             // New tire - insert
-            val id = tireRepository.insertTire(product, barcode, quantity, vendor)
+            val id = tireRepository.insertTire(product, barcode, quantity)
             if (id > 0) {
                 Toast.makeText(this, "Added $quantity new tires", Toast.LENGTH_LONG).show()
             } else {

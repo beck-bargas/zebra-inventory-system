@@ -20,7 +20,6 @@ class TireRepository(context: Context) {
                     brand = cursor.getString(cursor.getColumnIndexOrThrow("brand")),
                     size = cursor.getString(cursor.getColumnIndexOrThrow("size")),
                     quantity = cursor.getInt(cursor.getColumnIndexOrThrow("quantity")),
-                    vendor = cursor.getString(cursor.getColumnIndexOrThrow("vendor")),
                     imageUrl = cursor.getString(cursor.getColumnIndexOrThrow("image_url"))
                 )
             )
@@ -44,7 +43,6 @@ class TireRepository(context: Context) {
                 brand = cursor.getString(cursor.getColumnIndexOrThrow("brand")),
                 size = cursor.getString(cursor.getColumnIndexOrThrow("size")),
                 quantity = cursor.getInt(cursor.getColumnIndexOrThrow("quantity")),
-                vendor = cursor.getString(cursor.getColumnIndexOrThrow("vendor")),
                 imageUrl = cursor.getString(cursor.getColumnIndexOrThrow("image_url"))
             )
         } else null
@@ -68,7 +66,6 @@ class TireRepository(context: Context) {
                 brand = cursor.getString(cursor.getColumnIndexOrThrow("brand")),
                 size = cursor.getString(cursor.getColumnIndexOrThrow("size")),
                 quantity = cursor.getInt(cursor.getColumnIndexOrThrow("quantity")),
-                vendor = cursor.getString(cursor.getColumnIndexOrThrow("vendor")),
                 imageUrl = cursor.getString(cursor.getColumnIndexOrThrow("image_url"))
             )
         } else null
@@ -89,7 +86,7 @@ class TireRepository(context: Context) {
         val tires = mutableListOf<TireEntry>()
         val cursor = db.query(
             "tires", null,
-            "brand LIKE ? OR size LIKE ? OR vendor LIKE ?",
+            "brand LIKE ? OR size LIKE ?",
             arrayOf("%$query%", "%$query%", "%$query%"),
             null, null, "brand ASC"
         )
@@ -102,7 +99,6 @@ class TireRepository(context: Context) {
                     brand = cursor.getString(cursor.getColumnIndexOrThrow("brand")),
                     size = cursor.getString(cursor.getColumnIndexOrThrow("size")),
                     quantity = cursor.getInt(cursor.getColumnIndexOrThrow("quantity")),
-                    vendor = cursor.getString(cursor.getColumnIndexOrThrow("vendor")),
                     imageUrl = cursor.getString(cursor.getColumnIndexOrThrow("image_url"))
                 )
             )
@@ -111,7 +107,7 @@ class TireRepository(context: Context) {
         return tires
     }
 
-    fun insertTire(product: Product, barcode: String, quantity: Int, vendor: String?): Long {
+    fun insertTire(product: Product, barcode: String, quantity: Int): Long {
         val db = dbHelper.writableDatabase
         val values = ContentValues().apply {
             put("sync_id", java.util.UUID.randomUUID().toString())
@@ -119,7 +115,6 @@ class TireRepository(context: Context) {
             put("brand", product.brand ?: "")
             put("size", product.size ?: "")
             put("quantity", quantity)
-            put("vendor", vendor ?: "")
             put("image_url", product.images?.firstOrNull() ?: "")
         }
         return db.insert("tires", null, values)
@@ -188,7 +183,6 @@ class TireRepository(context: Context) {
                     put("brand", remote.brand)
                     put("size", remote.size)
                     put("quantity", remote.quantity)
-                    put("vendor", remote.vendor ?: "")
                     put("image_url", remote.imageUrl ?: "")
                 }
                 db.insert("tires", null, values)

@@ -40,15 +40,6 @@
                     android:text="Size"
                     android:textSize="16sp" />
 
-                <TextView
-                    android:id="@+id/tvVendor"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Vendor"
-                    android:textSize="14sp"
-                    android:textColor="?attr/colorOnSurfaceVariant" />
-
             </LinearLayout>
 
             <TextView

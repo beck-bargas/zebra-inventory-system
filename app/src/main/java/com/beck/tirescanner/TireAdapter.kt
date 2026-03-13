@@ -16,7 +16,6 @@ class TireAdapter(
     class TireViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvBrand: TextView = view.findViewById(R.id.tvBrand)
         val tvSize: TextView = view.findViewById(R.id.tvSize)
-        val tvVendor: TextView = view.findViewById(R.id.tvVendor)
         val tvQuantity: TextView = view.findViewById(R.id.tvQuantity)
         val tvBarcode: TextView = view.findViewById(R.id.tvBarcode)
     }
@@ -31,7 +30,6 @@ class TireAdapter(
         val tire = tires[position]
         holder.tvBrand.text = tire.brand
         holder.tvSize.text = tire.size
-        holder.tvVendor.text = "Vendor: ${tire.vendor ?: "None"}"
         holder.tvQuantity.text = tire.quantity.toString()
         holder.tvBarcode.text = "Barcode: ${tire.barcode}"
 

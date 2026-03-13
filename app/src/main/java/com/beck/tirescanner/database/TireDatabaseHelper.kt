@@ -12,7 +12,6 @@ data class TireEntry(
     val brand: String,
     val size: String,
     val quantity: Int,
-    val vendor: String? = null,
     val imageUrl: String? = null
 )
 
@@ -28,7 +27,6 @@ class TireDatabaseHelper(context: Context) : SQLiteOpenHelper(
                 brand TEXT,
                 size TEXT,
                 quantity INTEGER DEFAULT 1,
-                vendor TEXT,
                 image_url TEXT
             )
         """)
