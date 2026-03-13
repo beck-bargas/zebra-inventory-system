@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -13,7 +12,6 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
-import android.widget.ListView
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -27,31 +25,23 @@ import com.beck.tirescanner.network.RetrofitClient
 import com.beck.tirescanner.utils.TireSizeTextWatcher
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
-import androidx.core.graphics.toColorInt
 
 class MainActivity : AppCompatActivity() {
-    // Database
     private lateinit var tireRepository: TireRepository
-
-    // UI Elements
     private lateinit var barcodeText: TextView
     private lateinit var responseText: TextView
     private lateinit var clearButton: Button
 
-    // DataWedge configuration
     companion object {
         private const val DATAWEDGE_INTENT_ACTION = "com.beck.tirescanner.SCAN"
         private const val DATAWEDGE_INTENT_CATEGORY = "android.intent.category.DEFAULT"
     }
-    // BroadcastReceiver for DataWedge scans
+
     private val localBarcodeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.beck.tirescanner.LOCAL_SCAN") {
                 val barcode = intent.getStringExtra("barcode")
-
-                if (barcode != null) {
-                    handleBarcodeScanned(barcode)
-                }
+                if (barcode != null) handleBarcodeScanned(barcode)
             }
         }
     }
@@ -60,21 +50,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Initialize repository
         tireRepository = TireRepository(this)
-
-        // Initialize UI elements
         barcodeText = findViewById(R.id.barcodeText)
         responseText = findViewById(R.id.responseText)
         clearButton = findViewById(R.id.clearButton)
-
-        clearButton.setOnClickListener {
-            clearDisplay()
-        }
+        clearButton.setOnClickListener { clearDisplay() }
 
         configureDataWedge()
-
-        // Handle intent if launched by DataWedge
         handleIntent(intent)
     }
 
@@ -86,16 +68,12 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == "com.beck.tirescanner.SCAN") {
             val barcode = intent.getStringExtra("com.symbol.datawedge.data_string")
-
-            if (barcode != null) {
-                handleBarcodeScanned(barcode)
-            }
+            if (barcode != null) handleBarcodeScanned(barcode)
         }
     }
 
     override fun onResume() {
         super.onResume()
-
         val filter = IntentFilter("com.beck.tirescanner.LOCAL_SCAN")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(localBarcodeReceiver, filter, RECEIVER_NOT_EXPORTED)
@@ -107,11 +85,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        try {
-            unregisterReceiver(localBarcodeReceiver)
-        } catch (_: IllegalArgumentException) {
-            // Receiver wasn't registered
-        }
+        try { unregisterReceiver(localBarcodeReceiver) } catch (_: IllegalArgumentException) {}
     }
 
     private fun configureDataWedge() {
@@ -150,22 +124,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleBarcodeScanned(barcode: String) {
-        runOnUiThread {
-            barcodeText.text = barcode
-        }
+        runOnUiThread { barcodeText.text = barcode }
         sendBarcodeToAPI(barcode)
     }
 
     private fun sendBarcodeToAPI(barcode: String) {
         lifecycleScope.launch {
             try {
-                // Check if tire exists in database
-                val existingTireInDb = tireRepository.getTireByBarcode(barcode)
+                val mode = intent.getStringExtra("MODE") ?: "IN"
 
-                // Try Barcode Lookup API
+                // 1. Check local barcode cache first
+                val cached = tireRepository.getCachedTire(barcode)
+                if (cached != null) {
+                    val cachedProduct = Product(
+                        title = "",
+                        brand = cached.brand,
+                        size = cached.size,
+                        images = cached.imageUrl?.takeIf { it.isNotEmpty() }?.let { listOf(it) },
+                        barcode = barcode
+                    )
+                    runOnUiThread { showConfirmationDialog(cachedProduct, barcode) }
+                    return@launch
+                }
+
+                // 2. Cache miss — hit the APIs
+                val existingTireInDb = tireRepository.getTireByBarcode(barcode)
                 var product = tryGetProduct(barcode, existingTireInDb, paid = true)
 
-                // If no result or missing brand/size, try UPCitemdb free tier
                 if (product == null || !product.hasBrandAndSize()) {
                     Log.d("BarcodeScanner", "Paid API had no/incomplete result, trying free tier...")
                     val freeProduct = tryGetProduct(barcode, existingTireInDb, paid = false)
@@ -175,7 +160,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (product != null) {
-                    // If API missing brand/size, use database info if available
                     val finalProduct = if (!product.hasBrandAndSize() && existingTireInDb != null) {
                         Product(
                             title = product.title,
@@ -184,36 +168,19 @@ class MainActivity : AppCompatActivity() {
                             images = product.images,
                             barcode = barcode
                         )
-                    } else {
-                        product
-                    }
-
-                    // Get the scan mode
-                    val mode = intent.getStringExtra("MODE") ?: "IN"
+                    } else product
 
                     if (mode == "IN") {
-                        // Check if brand/size is missing after all fallbacks
                         if (!finalProduct.hasBrandAndSize()) {
                             runOnUiThread {
-                                val missingFields = finalProduct.getMissingFields()
-                                Toast.makeText(
-                                    this@MainActivity,
-                                    "Could not detect $missingFields",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                Toast.makeText(this@MainActivity, "Could not detect ${finalProduct.getMissingFields()}", Toast.LENGTH_SHORT).show()
                                 showManualEntryDialog(barcode, finalProduct)
                             }
                         } else {
-                            // IN MODE: Show confirmation dialog
-                            runOnUiThread {
-                                showConfirmationDialog(finalProduct, barcode)
-                            }
+                            runOnUiThread { showConfirmationDialog(finalProduct, barcode) }
                         }
                     } else {
-                        // OUT MODE: Show confirmation dialog (will handle if not in inventory)
-                        runOnUiThread {
-                            showConfirmationDialog(finalProduct, barcode)
-                        }
+                        runOnUiThread { showConfirmationDialog(finalProduct, barcode) }
                     }
                 } else {
                     runOnUiThread {
@@ -223,14 +190,11 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             } catch (e: Exception) {
-                runOnUiThread {
-                    responseText.text = "Error: ${e.message}"
-                }
+                runOnUiThread { responseText.text = "Error: ${e.message}" }
             }
         }
     }
 
-    // Helper that calls either paid or free endpoint and returns a Product or null
     private suspend fun tryGetProduct(barcode: String, existingTireInDb: TireEntry?, paid: Boolean): Product? {
         return try {
             val products = if (paid) {
@@ -238,24 +202,14 @@ class MainActivity : AppCompatActivity() {
             } else {
                 RetrofitClient.upcApiService.getProductInfo(barcode).toProducts()
             }
-
             if (products.isNotEmpty()) {
                 products[0]
             } else if (existingTireInDb != null && paid) {
-                Product(
-                    title = "",
-                    brand = existingTireInDb.brand,
-                    size = existingTireInDb.size,
-                    images = null,
-                    barcode = barcode
-                )
-            } else {
-                null
-            }
-        } catch (_: Exception) {
-            null
-        }
+                Product(title = "", brand = existingTireInDb.brand, size = existingTireInDb.size, images = null, barcode = barcode)
+            } else null
+        } catch (_: Exception) { null }
     }
+
     private fun showConfirmationDialog(product: Product, barcode: String) {
         runOnUiThread {
             val dialogView = layoutInflater.inflate(R.layout.dialog_tire_info, null)
@@ -264,39 +218,27 @@ class MainActivity : AppCompatActivity() {
             val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
             val editButton = dialogView.findViewById<Button>(R.id.editButton)
 
-            // Get the scan mode
             val mode = intent.getStringExtra("MODE") ?: "IN"
-
             titleView.text = "Verify Tire Information"
-
             confirmButton.text = if (mode == "IN") "Add" else "Remove"
 
-            // Set image in ImageView
             val imageUrl = product.images?.firstOrNull()
             if (imageUrl != null) {
-                Glide.with(this@MainActivity)
-                    .load(product.images[0])
-                    .into(imageView)
+                Glide.with(this@MainActivity).load(imageUrl).into(imageView)
             } else {
                 imageView.setImageResource(R.drawable.placeholder)
             }
 
-            dialogView.findViewById<TextView>(R.id.tvTitle).text = "${product.title}"
+            dialogView.findViewById<TextView>(R.id.tvTitle).text = product.title
             dialogView.findViewById<TextView>(R.id.tvSize).text = product.size
             dialogView.findViewById<TextView>(R.id.tvBrand).text = product.brand
 
-            val dialog = AlertDialog.Builder(this@MainActivity)
-                .setView(dialogView)
-                .create()
+            val dialog = AlertDialog.Builder(this@MainActivity).setView(dialogView).create()
 
             confirmButton.setOnClickListener {
                 dialog.dismiss()
-                if (mode == "IN") {
-                    askAmount(product, barcode)
-                } else {
-                    // OUT mode - go straight to quantity removal
-                    handleOutMode(product, barcode)
-                }
+                if (mode == "IN") askAmount(product, barcode)
+                else handleOutMode(product, barcode)
             }
 
             editButton.setOnClickListener {
@@ -309,17 +251,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleOutMode(product: Product, barcode: String) {
-        val existingTire = tireRepository.getTireByDetails(
-            barcode,
-            product.brand,
-            product.size
-        )
-
+        val existingTire = tireRepository.getTireByDetails(barcode, product.brand, product.size)
         if (existingTire != null) {
-            // Tire exists - ask how many to remove
             askQuantityToRemove(existingTire)
         } else {
-            // Not in inventory
             Toast.makeText(this, "Tire not found in inventory", Toast.LENGTH_SHORT).show()
         }
     }
@@ -333,32 +268,22 @@ class MainActivity : AppCompatActivity() {
         dialogView.findViewById<TextView>(R.id.etTitle).text = "Remove Quantity"
         input.hint = "Max: ${existingTire.quantity}"
 
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
-
+        val dialog = AlertDialog.Builder(this).setView(dialogView).create()
         dialog.show()
 
-        cancelButton.setOnClickListener {
-            dialog.dismiss()
-        }
+        cancelButton.setOnClickListener { dialog.dismiss() }
 
         confirmButton.setOnClickListener {
             val amountToRemove = input.text.toString().toIntOrNull()
-
             if (amountToRemove != null && amountToRemove > 0) {
                 if (amountToRemove > existingTire.quantity) {
                     Toast.makeText(this, "Cannot remove more than ${existingTire.quantity}", Toast.LENGTH_SHORT).show()
                 } else {
                     val success = tireRepository.decreaseQuantity(existingTire.id, amountToRemove)
-
                     if (success) {
                         val newTotal = existingTire.quantity - amountToRemove
-                        if (newTotal == 0) {
-                            Toast.makeText(this, "Removed all tires. Entry deleted.", Toast.LENGTH_LONG).show()
-                        } else {
-                            Toast.makeText(this, "Removed $amountToRemove tires. Remaining: $newTotal", Toast.LENGTH_LONG).show()
-                        }
+                        if (newTotal == 0) Toast.makeText(this, "Removed all tires. Entry deleted.", Toast.LENGTH_LONG).show()
+                        else Toast.makeText(this, "Removed $amountToRemove tires. Remaining: $newTotal", Toast.LENGTH_LONG).show()
                     } else {
                         Toast.makeText(this, "Error removing tires", Toast.LENGTH_SHORT).show()
                     }
@@ -372,65 +297,38 @@ class MainActivity : AppCompatActivity() {
 
     private fun showManualEntryDialog(barcode: String, product: Product?) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_manual_entry, null)
-
         val brandInput = dialogView.findViewById<EditText>(R.id.brandInput)
         val tirePrefixSpinner = dialogView.findViewById<Spinner>(R.id.tirePrefixSpinner)
         val tireSizeInput = dialogView.findViewById<EditText>(R.id.tireSizeInput)
         val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
         val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
 
-        // Setup spinner with tire prefixes
         val prefixes = arrayOf("None", "P", "LT", "ST")
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, prefixes)
-        tirePrefixSpinner.adapter = adapter
-
-        // Add TextWatcher for auto-formatting
+        tirePrefixSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, prefixes)
         tireSizeInput.addTextChangedListener(TireSizeTextWatcher(tireSizeInput))
 
-        // Pre-fill if API had partial data
         if (product != null) {
             brandInput.setText(product.brand.orEmpty())
-
             val sizeWithPrefix = product.size.orEmpty()
-            if (sizeWithPrefix.startsWith("P ")) {
-                tirePrefixSpinner.setSelection(1)
-                tireSizeInput.setText(sizeWithPrefix.substring(2))
-            } else if (sizeWithPrefix.startsWith("LT ")) {
-                tirePrefixSpinner.setSelection(2)
-                tireSizeInput.setText(sizeWithPrefix.substring(3))
-            } else {
-                tireSizeInput.setText(sizeWithPrefix)
+            when {
+                sizeWithPrefix.startsWith("P ") -> { tirePrefixSpinner.setSelection(1); tireSizeInput.setText(sizeWithPrefix.substring(2)) }
+                sizeWithPrefix.startsWith("LT ") -> { tirePrefixSpinner.setSelection(2); tireSizeInput.setText(sizeWithPrefix.substring(3)) }
+                else -> tireSizeInput.setText(sizeWithPrefix)
             }
         }
 
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Enter Tire Information")
-            .setView(dialogView)
-            .create()
+        val dialog = AlertDialog.Builder(this).setTitle("Enter Tire Information").setView(dialogView).create()
 
-        cancelButton.setOnClickListener {
-            dialog.dismiss()
-        }
+        cancelButton.setOnClickListener { dialog.dismiss() }
 
         confirmButton.setOnClickListener {
             val brand = brandInput.text.toString()
             val prefix = tirePrefixSpinner.selectedItem.toString()
             val sizeNumbers = tireSizeInput.text.toString()
-
-            val fullSize = if (prefix == "None") {
-                sizeNumbers
-            } else {
-                "$prefix $sizeNumbers"
-            }
+            val fullSize = if (prefix == "None") sizeNumbers else "$prefix $sizeNumbers"
 
             if (brand.isNotEmpty() && sizeNumbers.isNotEmpty()) {
-                val manualProduct = Product(
-                    title = "",
-                    brand = brand,
-                    size = fullSize,
-                    images = null,
-                    barcode = barcode
-                )
+                val manualProduct = Product(title = "", brand = brand, size = fullSize, images = null, barcode = barcode)
                 askAmount(manualProduct, barcode)
                 dialog.dismiss()
             }
@@ -445,19 +343,13 @@ class MainActivity : AppCompatActivity() {
         val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
         val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
 
-        val dialog = AlertDialog.Builder(this)
-            .setView(dialogView)
-            .create()
-
+        val dialog = AlertDialog.Builder(this).setView(dialogView).create()
         dialog.show()
 
-        cancelButton.setOnClickListener {
-            dialog.dismiss()
-        }
+        cancelButton.setOnClickListener { dialog.dismiss() }
 
         confirmButton.setOnClickListener {
             val amount = input.text.toString().toIntOrNull()
-
             if (amount != null && amount > 0) {
                 dialog.dismiss()
                 saveTireToInventory(product, barcode, amount)
@@ -468,18 +360,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveTireToInventory(product: Product, barcode: String, quantity: Int) {
-        // Check if tire exists
         val existingTire = tireRepository.getTireByDetails(barcode, product.brand, product.size)
 
+        // Always save to barcode cache so next scan is instant
+        tireRepository.saveToCache(barcode, product.brand ?: "", product.size ?: "", product.images?.firstOrNull())
+
         if (existingTire != null) {
-            // Tire exists - just add to existing quantity
             val success = tireRepository.increaseQuantity(existingTire.id, quantity)
             if (success) {
                 val newTotal = existingTire.quantity + quantity
                 Toast.makeText(this, "Added $quantity tires. Total: $newTotal", Toast.LENGTH_LONG).show()
             }
         } else {
-            // New tire - insert
             val id = tireRepository.insertTire(product, barcode, quantity)
             if (id > 0) {
                 Toast.makeText(this, "Added $quantity new tires", Toast.LENGTH_LONG).show()

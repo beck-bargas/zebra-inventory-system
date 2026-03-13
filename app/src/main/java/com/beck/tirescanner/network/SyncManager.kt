@@ -49,18 +49,38 @@ class SyncManager(
         }
 
         registrationListener = object : NsdManager.RegistrationListener {
-            override fun onRegistrationFailed(info: NsdServiceInfo, code: Int) {}
+            override fun onRegistrationFailed(info: NsdServiceInfo, code: Int) {
+                Log.e("SyncManager", "Registration failed: $code")
+            }
             override fun onUnregistrationFailed(info: NsdServiceInfo, code: Int) {}
-            override fun onServiceRegistered(info: NsdServiceInfo) {}
+            override fun onServiceRegistered(info: NsdServiceInfo) {
+                Log.d("SyncManager", "Service registered: ${info.serviceName}")
+            }
             override fun onServiceUnregistered(info: NsdServiceInfo) {}
         }
 
         nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener)
     }
 
+    private fun getLocalIpAddresses(): List<String> {
+        val ips = mutableListOf<String>()
+        try {
+            NetworkInterface.getNetworkInterfaces()?.toList()?.forEach { iface ->
+                iface.inetAddresses?.toList()?.forEach { addr ->
+                    if (!addr.isLoopbackAddress && addr.hostAddress?.contains(':') == false) {
+                        ips.add(addr.hostAddress ?: "")
+                    }
+                }
+            }
+        } catch (e: Exception) { }
+        Log.d("SyncManager", "Local IPs: $ips")
+        return ips
+    }
+
     suspend fun discoverAndSync(onResult: (String) -> Unit) {
         withContext(Dispatchers.IO) {
             val foundDevices = mutableListOf<NsdServiceInfo>()
+            val localIps = getLocalIpAddresses()
 
             discoveryListener = object : NsdManager.DiscoveryListener {
                 override fun onDiscoveryStarted(type: String) {
@@ -82,9 +102,13 @@ class SyncManager(
                                 Log.e("SyncManager", "Resolve failed: $code")
                             }
                             override fun onServiceResolved(info: NsdServiceInfo) {
-                                Log.d("SyncManager", "Resolved: ${info.host}:${info.port}")
-                                if (!isLocalAddress(info.host)) {
+                                val resolvedIp = info.host?.hostAddress ?: ""
+                                Log.d("SyncManager", "Resolved: $resolvedIp:${info.port}, local IPs: $localIps")
+                                if (resolvedIp !in localIps) {
+                                    Log.d("SyncManager", "Adding remote device: $resolvedIp")
                                     foundDevices.add(info)
+                                } else {
+                                    Log.d("SyncManager", "Skipping own service at $resolvedIp")
                                 }
                             }
                         })
@@ -97,10 +121,10 @@ class SyncManager(
             }
 
             nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
-            Thread.sleep(5000)
+            Thread.sleep(6000) // wait longer for resolves to complete
 
             try { nsdManager.stopServiceDiscovery(discoveryListener) } catch (e: Exception) { }
-            Thread.sleep(1000) // wait for pending resolves to finish
+            Thread.sleep(1000)
 
             Log.d("SyncManager", "Found ${foundDevices.size} device(s)")
 
@@ -121,6 +145,7 @@ class SyncManager(
             }
         }
     }
+
     private fun syncWithDevice(host: InetAddress, port: Int): Boolean {
         return try {
             val baseUrl = "http://${host.hostAddress}:$port"
@@ -130,14 +155,14 @@ class SyncManager(
             val getConn = getUrl.openConnection() as HttpURLConnection
             getConn.requestMethod = "GET"
             getConn.setRequestProperty("x-sync-token", syncToken)
-            getConn.connectTimeout = 3000
-            getConn.readTimeout = 3000
+            getConn.connectTimeout = 5000
+            getConn.readTimeout = 5000
 
             val responseCode = getConn.responseCode
             Log.d("SyncManager", "GET response code: $responseCode")
 
             val remoteJson = getConn.inputStream.bufferedReader().readText()
-            Log.d("SyncManager", "Remote inventory: $remoteJson")
+            Log.d("SyncManager", "Remote inventory received, parsing...")
             getConn.disconnect()
 
             val remoteTires = gson.fromJson(remoteJson, Array<com.beck.tirescanner.database.TireEntry>::class.java).toList()
@@ -145,7 +170,6 @@ class SyncManager(
 
             val ourTires = tireRepository.getAllTires()
             val ourJson = gson.toJson(ourTires)
-            Log.d("SyncManager", "Sending our inventory: $ourJson")
 
             val postUrl = URL("$baseUrl/sync")
             val postConn = postUrl.openConnection() as HttpURLConnection
@@ -153,8 +177,8 @@ class SyncManager(
             postConn.doOutput = true
             postConn.setRequestProperty("Content-Type", "application/json")
             postConn.setRequestProperty("x-sync-token", syncToken)
-            postConn.connectTimeout = 3000
-            postConn.readTimeout = 3000
+            postConn.connectTimeout = 5000
+            postConn.readTimeout = 5000
 
             val writer = OutputStreamWriter(postConn.outputStream)
             writer.write(ourJson)
@@ -167,15 +191,6 @@ class SyncManager(
             postCode == 200
         } catch (e: Exception) {
             Log.e("SyncManager", "Sync error: ${e.message}", e)
-            false
-        }
-    }
-    private fun isLocalAddress(address: InetAddress): Boolean {
-        return try {
-            NetworkInterface.getNetworkInterfaces().toList().any { iface ->
-                iface.inetAddresses.toList().any { it == address }
-            }
-        } catch (e: Exception) {
             false
         }
     }
