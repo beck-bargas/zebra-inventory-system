@@ -26,6 +26,7 @@ class HomeActivity : AppCompatActivity() {
         RetrofitClient.API_KEY = BuildConfig.BARCODE_API_KEY
 
         tireRepository = TireRepository(this)
+        tireRepository.backfillSkus()
         syncManager = SyncManager(this, tireRepository, BuildConfig.SYNC_TOKEN)
         syncManager.startServer()
 

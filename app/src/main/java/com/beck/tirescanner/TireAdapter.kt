@@ -17,7 +17,7 @@ class TireAdapter(
         val tvBrand: TextView = view.findViewById(R.id.tvBrand)
         val tvSize: TextView = view.findViewById(R.id.tvSize)
         val tvQuantity: TextView = view.findViewById(R.id.tvQuantity)
-        val tvBarcode: TextView = view.findViewById(R.id.tvBarcode)
+        val tvSku: TextView = view.findViewById(R.id.tvSku)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TireViewHolder {
@@ -31,7 +31,7 @@ class TireAdapter(
         holder.tvBrand.text = tire.brand
         holder.tvSize.text = tire.size
         holder.tvQuantity.text = tire.quantity.toString()
-        holder.tvBarcode.text = "Barcode: ${tire.barcode}"
+        holder.tvSku.text = "SKU: ${tire.sku}"
 
         holder.itemView.setOnLongClickListener {
             onLongClick(tire)

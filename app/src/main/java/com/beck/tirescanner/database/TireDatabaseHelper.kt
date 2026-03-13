@@ -4,7 +4,6 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-// TireEntry now includes syncId so devices can identify the same tire
 data class TireEntry(
     val id: Int = 0,
     val syncId: String = java.util.UUID.randomUUID().toString(), // unique ID shared across devices
@@ -12,14 +11,21 @@ data class TireEntry(
     val brand: String,
     val size: String,
     val quantity: Int,
-    val imageUrl: String? = null
-)
+    val imageUrl: String? = null,
+    val sku: String = generateSku()
+) {
+
+    companion object {
+        fun generateSku(): String = (100000..999999).random().toString()
+    }
+}
 
 class TireDatabaseHelper(context: Context) : SQLiteOpenHelper(
-    context, "tires.db", null, 2  // bumped to version 2 for sync_id migration
+    context, "tires.db", null, 4
 ) {
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("""
+        db.execSQL(
+            """
             CREATE TABLE tires (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 sync_id TEXT UNIQUE NOT NULL,
@@ -27,17 +33,44 @@ class TireDatabaseHelper(context: Context) : SQLiteOpenHelper(
                 brand TEXT,
                 size TEXT,
                 quantity INTEGER DEFAULT 1,
+                image_url TEXT,
+                sku TEXT
+            )
+        """
+        )
+        db.execSQL(
+            """
+            CREATE TABLE barcode_cache(
+                barcode TEXT PRIMARY KEY,
+                brand TEXT,
+                size TEXT,
                 image_url TEXT
             )
-        """)
+        """
+        )
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) {
-            // Add sync_id column to existing installs
             db.execSQL("ALTER TABLE tires ADD COLUMN sync_id TEXT")
-            // Backfill existing rows with a UUID
             db.execSQL("UPDATE tires SET sync_id = lower(hex(randomblob(16))) WHERE sync_id IS NULL")
+        }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE tires ADD COLUMN sku TEXT")
+        }
+        if (oldVersion < 4) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS barcode_cache (
+                barcode TEXT PRIMARY KEY,
+                brand TEXT,
+                size TEXT,
+                image_url TEXT
+                )
+            """)
+            db.execSQL("""
+                INSERT OR IGNORE INTO barcode_cache (barcode, brand, size, image_url)
+                SELECT barcode, brand, size, image_url FROM tires
+            """)
         }
     }
 }

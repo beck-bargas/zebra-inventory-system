@@ -55,11 +55,11 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/tvBarcode"
+            android:id="@+id/tvSku"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Barcode: 123456789"
+            android:text="SKU: 123456"
             android:textSize="12sp"
             android:textColor="?attr/colorOnSurfaceVariant" />
 
