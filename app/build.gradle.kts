@@ -25,6 +25,9 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    packagingOptions {
+        resources.excludes += "META-INF/*"
+    }
 
     buildTypes {
         release {
