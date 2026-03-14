@@ -90,6 +90,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun configureDataWedge() {
+        val deleteIntent = Intent()
+        deleteIntent.action = "com.symbol.datawedge.api.ACTION"
+        deleteIntent.putExtra("com.symbol.datawedge.api.DELETE_PROFILE", arrayOf("BarcodeScannerProfile"))
+        sendBroadcast(deleteIntent)
+
+        Thread.sleep(200)
+
         val createIntent = Intent()
         createIntent.action = "com.symbol.datawedge.api.ACTION"
         createIntent.putExtra("com.symbol.datawedge.api.CREATE_PROFILE", "BarcodeScannerProfile")
@@ -102,7 +109,7 @@ class MainActivity : AppCompatActivity() {
 
         val appConfig = Bundle()
         appConfig.putString("PACKAGE_NAME", packageName)
-        appConfig.putStringArray("ACTIVITY_LIST", arrayOf("*"))
+        appConfig.putStringArray("ACTIVITY_LIST", arrayOf("com.beck.tirescanner.MainActivity"))
         intentBundle.putParcelableArray("APP_LIST", arrayOf(appConfig))
 
         val intentConfig = Bundle()
@@ -162,7 +169,6 @@ class MainActivity : AppCompatActivity() {
             try {
                 val mode = intent.getStringExtra("MODE") ?: "IN"
 
-                // Check local barcode cache first
                 val cached = tireRepository.getCachedTire(barcode)
                 if (cached != null) {
                     val cachedProduct = Product(
@@ -176,7 +182,6 @@ class MainActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                // Cache miss — hit the APIs
                 val existingTireInDb = tireRepository.getTireByBarcode(barcode)
                 var product = tryGetProduct(barcode, existingTireInDb, paid = true)
 

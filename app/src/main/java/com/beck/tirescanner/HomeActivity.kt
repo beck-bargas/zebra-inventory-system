@@ -55,11 +55,6 @@ class HomeActivity : AppCompatActivity() {
             val intent = Intent(this, InventoryActivity::class.java)
             startActivity(intent)
         }
-        val test = TireEntry.extractNameFromTitle(
-            "Cooper Commuter All-Season 205/60R16 92H Tire",
-            null
-        )
-        Log.d("TireName", "result: $test")
     }
 
     override fun onResume() {
