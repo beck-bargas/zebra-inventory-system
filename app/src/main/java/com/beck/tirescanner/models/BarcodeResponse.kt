@@ -20,8 +20,10 @@ data class BarcodeLookupProduct(
 ) {
     fun toProduct(): Product {
         val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
+        val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
         val resolvedSize = when {
-            !size.isNullOrEmpty() -> size
+            !cleanedSize.isNullOrEmpty() && sizeRegex.containsMatchIn(cleanedSize) ->
+                sizeRegex.find(cleanedSize)!!.value.replace(Regex("\\s"), "").trim()
             !title.isNullOrEmpty() && sizeRegex.containsMatchIn(title) ->
                 sizeRegex.find(title)!!.value.replace(Regex("\\s"), "").trim()
             else -> null
@@ -51,8 +53,10 @@ data class UpcItem(
 ) {
     fun toProduct(): Product {
         val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
+        val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
         val resolvedSize = when {
-            !size.isNullOrEmpty() -> size
+            !cleanedSize.isNullOrEmpty() && sizeRegex.containsMatchIn(cleanedSize) ->
+                sizeRegex.find(cleanedSize)!!.value.replace(Regex("\\s"), "").trim()
             !title.isNullOrEmpty() && sizeRegex.containsMatchIn(title) ->
                 sizeRegex.find(title)!!.value.replace(Regex("\\s"), "").trim()
             !dimension.isNullOrEmpty() -> dimension
