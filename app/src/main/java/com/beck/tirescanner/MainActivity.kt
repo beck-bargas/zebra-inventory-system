@@ -344,7 +344,10 @@ class MainActivity : AppCompatActivity() {
         tireSizeInput.addTextChangedListener(TireSizeTextWatcher(tireSizeInput))
 
         if (product != null) {
-            brandInput.setText(product.brand.orEmpty())
+            val parsedName = TireEntry.extractNameFromTitle(product.title, product.mpn)
+                ?: tireRepository.getTireByBarcode(barcode)?.name
+                ?: product.brand.orEmpty()
+            brandInput.setText(parsedName)
             val sizeWithPrefix = product.size.orEmpty()
             when {
                 sizeWithPrefix.startsWith("P ") -> { tirePrefixSpinner.setSelection(1); tireSizeInput.setText(sizeWithPrefix.substring(2)) }
@@ -358,13 +361,13 @@ class MainActivity : AppCompatActivity() {
         cancelButton.setOnClickListener { dialog.dismiss() }
 
         confirmButton.setOnClickListener {
-            val brand = brandInput.text.toString()
+            val name = brandInput.text.toString()
             val prefix = tirePrefixSpinner.selectedItem.toString()
             val sizeNumbers = tireSizeInput.text.toString()
             val fullSize = if (prefix == "None") sizeNumbers else "$prefix $sizeNumbers"
 
-            if (brand.isNotEmpty() && sizeNumbers.isNotEmpty()) {
-                val manualProduct = Product(title = "", brand = brand, size = fullSize, images = null, barcode = barcode)
+            if (name.isNotEmpty() && sizeNumbers.isNotEmpty()) {
+                val manualProduct = Product(title = name, brand = product?.brand ?: name, size = fullSize, images = null, barcode = barcode, mpn = product?.mpn)
                 askAmount(manualProduct, barcode)
                 dialog.dismiss()
             }
