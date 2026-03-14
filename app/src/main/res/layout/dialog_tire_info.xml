@@ -35,7 +35,7 @@
                 android:id="@+id/tireImage"
                 android:layout_width="match_parent"
                 android:layout_height="220dp"
-                android:scaleType="fitCenter"
+                android:scaleType="centerCrop"
                 android:padding="16dp"
                 android:background="@android:color/white"
                 android:contentDescription="Tire image" />
