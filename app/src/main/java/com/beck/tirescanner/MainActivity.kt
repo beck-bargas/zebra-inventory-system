@@ -22,7 +22,6 @@ import com.beck.tirescanner.database.TireEntry
 import com.beck.tirescanner.database.TireRepository
 import com.beck.tirescanner.models.Product
 import com.beck.tirescanner.network.RetrofitClient
-import com.beck.tirescanner.utils.TireSizeTextWatcher
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
 
@@ -335,32 +334,58 @@ class MainActivity : AppCompatActivity() {
         val dialogView = layoutInflater.inflate(R.layout.dialog_manual_entry, null)
         val brandInput = dialogView.findViewById<EditText>(R.id.brandInput)
         val tirePrefixSpinner = dialogView.findViewById<Spinner>(R.id.tirePrefixSpinner)
-        val tireSizeInput = dialogView.findViewById<EditText>(R.id.tireSizeInput)
+        val tireWidthInput = dialogView.findViewById<EditText>(R.id.tireWidthInput)
+        val tireRatioInput = dialogView.findViewById<EditText>(R.id.tireRatioInput)
+        val tireConstructionSpinner = dialogView.findViewById<Spinner>(R.id.tireConstructionSpinner)
+        val tireDiameterInput = dialogView.findViewById<EditText>(R.id.tireDiameterInput)
+        val tireLoadIndexInput = dialogView.findViewById<EditText>(R.id.tireLoadIndexInput)
+        val tireSpeedRatingSpinner = dialogView.findViewById<Spinner>(R.id.tireSpeedRatingSpinner)
+        val plyRatingSpinner = dialogView.findViewById<Spinner>(R.id.plyRatingSpinner)
         val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
         val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
 
-        val prefixes = arrayOf("None", "P", "LT", "ST")
+        val prefixes = arrayOf("None", "P", "LT", "ST", "C")
         tirePrefixSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, prefixes)
-        tireSizeInput.addTextChangedListener(TireSizeTextWatcher(tireSizeInput))
+
+        val constructions = arrayOf("R", "D", "B")
+        tireConstructionSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, constructions)
+
+        val speedRatings = arrayOf("None", "Q", "R", "S", "T", "H", "V", "W", "Y", "Z")
+        tireSpeedRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, speedRatings)
+
+        val loadRanges = arrayOf("None", "C", "D", "E", "F")
+        plyRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, loadRanges)
 
         if (product != null) {
-            val parsedName = TireEntry.extractNameFromTitle(product.title, product.mpn) ?: product.brand.orEmpty()
+            val parsedName = TireEntry.extractNameFromTitle(product.title, product.mpn)
+                ?: tireRepository.getTireByBarcode(barcode)?.name
+                ?: product.brand.orEmpty()
             brandInput.setText(parsedName)
-            val sizeWithPrefix = product.size.orEmpty()
-            when {
-                sizeWithPrefix.startsWith("P ") || (sizeWithPrefix.startsWith("P") && sizeWithPrefix.length > 1 && sizeWithPrefix[1].isDigit()) -> {
-                    tirePrefixSpinner.setSelection(1)
-                    tireSizeInput.setText(sizeWithPrefix.removePrefix("P ").removePrefix("P"))
-                }
-                sizeWithPrefix.startsWith("LT ") || (sizeWithPrefix.startsWith("LT") && sizeWithPrefix.length > 2 && sizeWithPrefix[2].isDigit()) -> {
-                    tirePrefixSpinner.setSelection(2)
-                    tireSizeInput.setText(sizeWithPrefix.removePrefix("LT ").removePrefix("LT"))
-                }
-                sizeWithPrefix.startsWith("ST ") || (sizeWithPrefix.startsWith("ST") && sizeWithPrefix.length > 2 && sizeWithPrefix[2].isDigit()) -> {
-                    tirePrefixSpinner.setSelection(3)
-                    tireSizeInput.setText(sizeWithPrefix.removePrefix("ST ").removePrefix("ST"))
-                }
-                else -> tireSizeInput.setText(sizeWithPrefix)
+
+            val size = product.size.orEmpty()
+            val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3})?([A-Z]{1,2})?\s*([C-F])?""", RegexOption.IGNORE_CASE)
+            val match = sizeRegex.find(size)
+            if (match != null) {
+                val typeStr = match.groupValues[1]
+                val width = match.groupValues[2]
+                val ratio = match.groupValues[3]
+                val construction = match.groupValues[4]
+                val diameter = match.groupValues[5]
+                val loadIndex = match.groupValues[6]
+                val speedRating = match.groupValues[7]
+                val loadRange = match.groupValues[8]
+                val prefixIndex = prefixes.indexOfFirst { it.equals(typeStr, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
+                tirePrefixSpinner.setSelection(prefixIndex)
+                tireWidthInput.setText(width)
+                tireRatioInput.setText(ratio)
+                val constructionIndex = constructions.indexOfFirst { it.equals(construction, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
+                tireConstructionSpinner.setSelection(constructionIndex)
+                tireDiameterInput.setText(diameter)
+                tireLoadIndexInput.setText(loadIndex)
+                val speedIndex = speedRatings.indexOfFirst { it.equals(speedRating, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
+                tireSpeedRatingSpinner.setSelection(speedIndex)
+                val loadRangeIndex = loadRanges.indexOfFirst { it.equals(loadRange, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
+                plyRatingSpinner.setSelection(loadRangeIndex)
             }
         }
 
@@ -371,13 +396,28 @@ class MainActivity : AppCompatActivity() {
         confirmButton.setOnClickListener {
             val name = brandInput.text.toString()
             val prefix = tirePrefixSpinner.selectedItem.toString()
-            val sizeNumbers = tireSizeInput.text.toString()
-            val fullSize = if (prefix == "None") sizeNumbers else "$prefix $sizeNumbers"
+            val width = tireWidthInput.text.toString()
+            val ratio = tireRatioInput.text.toString()
+            val construction = tireConstructionSpinner.selectedItem.toString()
+            val diameter = tireDiameterInput.text.toString()
+            val loadIndex = tireLoadIndexInput.text.toString()
+            val speedRating = tireSpeedRatingSpinner.selectedItem.toString()
+            val loadRange = plyRatingSpinner.selectedItem.toString()
 
-            if (name.isNotEmpty() && sizeNumbers.isNotEmpty()) {
+            val fullSize = buildString {
+                if (prefix != "None") append("$prefix ")
+                append("$width/$ratio$construction$diameter")
+                if (loadIndex.isNotEmpty()) append(" $loadIndex")
+                if (speedRating != "None") append(speedRating)
+                if (loadRange != "None") append(" $loadRange")
+            }
+
+            if (name.isNotEmpty() && width.isNotEmpty() && diameter.isNotEmpty()) {
                 val manualProduct = Product(title = name, brand = product?.brand ?: name, size = fullSize, images = product?.images, barcode = barcode, mpn = product?.mpn)
                 askAmount(manualProduct, barcode)
                 dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Please enter at least name, width, and diameter", Toast.LENGTH_SHORT).show()
             }
         }
 

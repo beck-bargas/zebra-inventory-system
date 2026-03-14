@@ -20,13 +20,13 @@ data class BarcodeLookupProduct(
 ) {
     fun toProduct(): Product {
         val resolvedBrand = brand?.takeIf { it.isNotEmpty() } ?: manufacturer
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
         val resolvedSize = when {
             !cleanedSize.isNullOrEmpty() && sizeRegex.containsMatchIn(cleanedSize) ->
-                sizeRegex.find(cleanedSize)!!.value.replace(Regex("\\s"), "").trim()
+                normalizeSize(sizeRegex.find(cleanedSize)!!.value)
             !title.isNullOrEmpty() && sizeRegex.containsMatchIn(title) ->
-                sizeRegex.find(title)!!.value.replace(Regex("\\s"), "").trim()
+                normalizeSize(sizeRegex.find(title)!!.value)
             else -> null
         }
         val finalSize = if (resolvedSize != null && !resolvedSize.startsWith("LT", ignoreCase = true) &&
@@ -34,6 +34,13 @@ data class BarcodeLookupProduct(
             "LT$resolvedSize"
         } else resolvedSize
         return Product(title = title, brand = resolvedBrand, size = finalSize, images = images, barcode = barcode, mpn = mpn)
+    }
+
+    private fun normalizeSize(raw: String): String {
+        return raw
+            .replace(Regex("""\s*/\s*"""), "/")
+            .replace(Regex("""([RDB])\s*(\d)"""), "$1$2")
+            .trim()
     }
 }
 
@@ -56,13 +63,13 @@ data class UpcItem(
     val offers: List<Offer>? = null
 ) {
     fun toProduct(): Product {
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
         val resolvedSize = when {
             !cleanedSize.isNullOrEmpty() && sizeRegex.containsMatchIn(cleanedSize) ->
-                sizeRegex.find(cleanedSize)!!.value.replace(Regex("\\s"), "").trim()
+                normalizeSize(sizeRegex.find(cleanedSize)!!.value)
             !title.isNullOrEmpty() && sizeRegex.containsMatchIn(title) ->
-                sizeRegex.find(title)!!.value.replace(Regex("\\s"), "").trim()
+                normalizeSize(sizeRegex.find(title)!!.value)
             !dimension.isNullOrEmpty() -> dimension
             else -> null
         }
@@ -71,6 +78,13 @@ data class UpcItem(
             "LT$resolvedSize"
         } else resolvedSize
         return Product(title = title, brand = brand, size = finalSize, images = images, barcode = upc ?: ean)
+    }
+
+    private fun normalizeSize(raw: String): String {
+        return raw
+            .replace(Regex("""\s*/\s*"""), "/")
+            .replace(Regex("""([RDB])\s*(\d)"""), "$1$2")
+            .trim()
     }
 }
 

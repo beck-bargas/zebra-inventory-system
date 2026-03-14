@@ -1,87 +1,261 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="20dp">
-
-    <!-- Your existing content -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Name"
-        android:textSize="12sp"
-        android:textColor="#666666" />
-
-    <EditText
-        android:id="@+id/brandInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="e.g. Discoverer Road+Trail AT"
-        android:inputType="text"
-        android:textSize="16sp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Tire Size"
-        android:textSize="12sp"
-        android:textColor="#666666" />
+    android:layout_height="wrap_content">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:padding="20dp">
 
-        <Spinner
-            android:id="@+id/tirePrefixSpinner"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:minWidth="80dp" />
+            android:text="Name"
+            android:textSize="12sp"
+            android:textColor="#666666" />
 
         <EditText
-            android:id="@+id/tireSizeInput"
-            android:layout_width="0dp"
+            android:id="@+id/brandInput"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="___/___ R__"
-            android:inputType="number"
+            android:hint="e.g. Discoverer Road+Trail AT"
+            android:inputType="text"
             android:textSize="16sp" />
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:orientation="horizontal"
-        android:gravity="end">
-
-        <Button
-            android:id="@+id/cancelButton"
-            style="?android:attr/buttonBarButtonStyle"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cancel" />
+            android:layout_marginTop="20dp"
+            android:text="TIRE SIZE"
+            android:textSize="11sp"
+            android:textColor="#999999"
+            android:letterSpacing="0.1" />
 
         <View
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_weight="1">
+            android:layout_marginBottom="12dp"
+            android:background="#E0E0E0" />
 
-        </View>
-
-        <Button
-            android:id="@+id/confirmButton"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Confirm"
-            android:layout_marginStart="8dp"
-            style="?android:attr/buttonBarButtonStyle" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Type"
+                android:textSize="13sp"
+                android:textColor="#666666" />
+
+            <Spinner
+                android:id="@+id/tirePrefixSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Width"
+                android:textSize="13sp"
+                android:textColor="#666666" />
+
+            <EditText
+                android:id="@+id/tireWidthInput"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:hint="265"
+                android:inputType="number"
+                android:maxLength="3"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Aspect Ratio"
+                android:textSize="13sp"
+                android:textColor="#666666" />
+
+            <EditText
+                android:id="@+id/tireRatioInput"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:hint="75"
+                android:inputType="number"
+                android:maxLength="2"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Construction"
+                android:textSize="13sp"
+                android:textColor="#666666" />
+
+            <Spinner
+                android:id="@+id/tireConstructionSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Wheel Diameter"
+                android:textSize="13sp"
+                android:textColor="#666666" />
+
+            <EditText
+                android:id="@+id/tireDiameterInput"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:hint="16"
+                android:inputType="number"
+                android:maxLength="2"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Load Index"
+                android:textSize="13sp"
+                android:textColor="#666666" />
+
+            <EditText
+                android:id="@+id/tireLoadIndexInput"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:hint="116"
+                android:inputType="number"
+                android:maxLength="3"
+                android:textSize="16sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Speed Rating"
+                android:textSize="13sp"
+                android:textColor="#666666" />
+
+            <Spinner
+                android:id="@+id/tireSpeedRatingSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="Load Range"
+                android:textSize="13sp"
+                android:textColor="#666666" />
+
+            <Spinner
+                android:id="@+id/plyRatingSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="80dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/cancelButton"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <Button
+                android:id="@+id/confirmButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Confirm"
+                android:layout_marginStart="8dp"
+                style="?android:attr/buttonBarButtonStyle" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
-</LinearLayout>
+</ScrollView>
