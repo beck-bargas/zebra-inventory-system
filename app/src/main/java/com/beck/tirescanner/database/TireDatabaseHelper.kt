@@ -13,7 +13,8 @@ data class TireEntry(
     val quantity: Int,
     val imageUrl: String? = null,
     val sku: String = generateSku(),
-    val name: String = brand
+    val name: String = brand,
+    val title: String? = null
 ) {
     companion object {
         fun generateSku(): String = (100000..999999).random().toString()
@@ -30,11 +31,11 @@ data class TireEntry(
             cleaned = cleaned.replace(sizeRegex, "")
 
             val junkWords = listOf(
-                "\\bTire\\b", "\\bTires\\b", "\\bBSW\\b", "\\bWSW\\b",
+                "(?<!Cooper )\\bTire\\b", "\\bTires\\b", "\\bBSW\\b", "\\bWSW\\b",
                 "\\bOWL\\b", "\\bRWL\\b", "\\bXL\\b", "\\bSL\\b",
-                "\\bHigh[- ]Performance\\b","\\b\\d{2,3}[A-Z]{1,2}\\b",
+                "\\bHigh[- ]Performance\\b", "\\b\\d{2,3}[A-Z]{1,2}\\b",
                 "\\bAll[- ]Terrain\\b", "\\bCommercial\\b"
-                )
+            )
             for (junk in junkWords) {
                 cleaned = cleaned?.replace(Regex(junk, RegexOption.IGNORE_CASE), "")
             }
@@ -47,7 +48,7 @@ data class TireEntry(
 }
 
 class TireDatabaseHelper(context: Context) : SQLiteOpenHelper(
-    context, "tires.db", null, 5
+    context, "tires.db", null, 6
 ) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""
@@ -68,7 +69,8 @@ class TireDatabaseHelper(context: Context) : SQLiteOpenHelper(
                 barcode TEXT PRIMARY KEY,
                 brand TEXT,
                 size TEXT,
-                image_url TEXT
+                image_url TEXT,
+                title TEXT
             )
         """)
     }
@@ -98,6 +100,9 @@ class TireDatabaseHelper(context: Context) : SQLiteOpenHelper(
         if (oldVersion < 5) {
             db.execSQL("ALTER TABLE tires ADD COLUMN name TEXT")
             db.execSQL("UPDATE tires SET name = brand WHERE name IS NULL")
+        }
+        if (oldVersion < 6) {
+            db.execSQL("ALTER TABLE barcode_cache ADD COLUMN title TEXT")
         }
     }
 }

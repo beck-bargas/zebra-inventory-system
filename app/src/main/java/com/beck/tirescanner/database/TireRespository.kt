@@ -32,15 +32,14 @@ class TireRepository(context: Context) {
         )
     }
 
-    // ── Barcode Cache ──────────────────────────────────────────────────────────
-
-    fun saveToCache(barcode: String, brand: String, size: String, imageUrl: String?) {
+    fun saveToCache(barcode: String, brand: String, size: String, imageUrl: String?, title: String?) {
         val db = dbHelper.writableDatabase
         val values = ContentValues().apply {
             put("barcode", barcode)
             put("brand", brand)
             put("size", size)
             put("image_url", imageUrl ?: "")
+            put("title", title ?: "")
         }
         db.insertWithOnConflict("barcode_cache", null, values, SQLiteDatabase.CONFLICT_REPLACE)
     }
@@ -49,19 +48,20 @@ class TireRepository(context: Context) {
         val db = dbHelper.readableDatabase
         val cursor = db.query("barcode_cache", null, "barcode = ?", arrayOf(barcode), null, null, null)
         val result = if (cursor.moveToFirst()) {
+            val titleIndex = cursor.getColumnIndex("title")
+            val title = if (titleIndex >= 0 && !cursor.isNull(titleIndex)) cursor.getString(titleIndex) else null
             TireEntry(
                 barcode = cursor.getString(cursor.getColumnIndexOrThrow("barcode")),
                 brand = cursor.getString(cursor.getColumnIndexOrThrow("brand")),
                 size = cursor.getString(cursor.getColumnIndexOrThrow("size")),
                 imageUrl = cursor.getString(cursor.getColumnIndexOrThrow("image_url")),
-                quantity = 0
+                quantity = 0,
+                title = title
             )
         } else null
         cursor.close()
         return result
     }
-
-    // ── Tires ──────────────────────────────────────────────────────────────────
 
     fun getAllTires(): List<TireEntry> {
         val db = dbHelper.readableDatabase
@@ -117,7 +117,6 @@ class TireRepository(context: Context) {
 
     fun insertTire(product: Product, barcode: String, quantity: Int): Long {
         val db = dbHelper.writableDatabase
-
         val existingSku = getTireByBarcode(barcode)?.sku ?: TireEntry.generateSku()
         val name = TireEntry.extractNameFromTitle(product.title, product.mpn)
             ?: product.brand
@@ -202,7 +201,7 @@ class TireRepository(context: Context) {
                 db.insert("tires", null, values)
             }
             cursor.close()
-            saveToCache(remote.barcode, remote.brand, remote.size, remote.imageUrl)
+            saveToCache(remote.barcode, remote.brand, remote.size, remote.imageUrl, remote.name)
         }
     }
 }
