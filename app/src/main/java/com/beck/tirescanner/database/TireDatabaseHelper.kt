@@ -26,7 +26,7 @@ data class TireEntry(
                 cleaned = cleaned.replace(Regex("\\b${Regex.escape(mpn)}\\b", RegexOption.IGNORE_CASE), "")
             }
 
-            val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}.*""", RegexOption.IGNORE_CASE)
+            val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
             cleaned = cleaned.replace(sizeRegex, "")
 
             val junkWords = listOf(
