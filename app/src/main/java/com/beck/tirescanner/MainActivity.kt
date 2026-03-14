@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
         val profileBundle = Bundle()
         profileBundle.putString("PROFILE_NAME", "BarcodeScannerProfile")
         profileBundle.putString("PROFILE_ENABLED", "true")
-        profileBundle.putString("CONFIG_MODE", "UPDATE")
+        profileBundle.putString("CONFIG_MODE", "OVERWRITE")
 
         val appConfig = Bundle()
         appConfig.putString("PACKAGE_NAME", packageName)
@@ -108,15 +108,33 @@ class MainActivity : AppCompatActivity() {
         val intentConfig = Bundle()
         intentConfig.putString("PLUGIN_NAME", "INTENT")
         intentConfig.putString("RESET_CONFIG", "true")
-
         val intentProps = Bundle()
         intentProps.putString("intent_output_enabled", "true")
         intentProps.putString("intent_action", DATAWEDGE_INTENT_ACTION)
         intentProps.putString("intent_category", DATAWEDGE_INTENT_CATEGORY)
         intentProps.putInt("intent_delivery", 0)
-
         intentConfig.putBundle("PARAM_LIST", intentProps)
-        profileBundle.putBundle("PLUGIN_CONFIG", intentConfig)
+
+        val barcodeConfig = Bundle()
+        barcodeConfig.putString("PLUGIN_NAME", "BARCODE")
+        barcodeConfig.putString("RESET_CONFIG", "true")
+        val barcodeParams = Bundle()
+        barcodeParams.putString("scanner_selection", "auto")
+        barcodeParams.putString("scanner_input_enabled", "true")
+        barcodeParams.putString("decoder_upca", "true")
+        barcodeParams.putString("decoder_upce", "true")
+        barcodeParams.putString("decoder_ean13", "true")
+        barcodeParams.putString("decoder_ean8", "true")
+        barcodeParams.putString("decoder_code128", "true")
+        barcodeParams.putString("decoder_code39", "true")
+        barcodeParams.putString("decoder_qrcode", "false")
+        barcodeParams.putString("decoder_datamatrix", "false")
+        barcodeParams.putString("decoder_pdf417", "false")
+        barcodeParams.putString("decoder_aztec", "false")
+        barcodeParams.putString("decoder_maxicode", "false")
+        barcodeConfig.putBundle("PARAM_LIST", barcodeParams)
+
+        profileBundle.putParcelableArray("PLUGIN_CONFIG", arrayOf(intentConfig, barcodeConfig))
 
         val profileIntent = Intent()
         profileIntent.action = "com.symbol.datawedge.api.ACTION"
@@ -154,7 +172,6 @@ class MainActivity : AppCompatActivity() {
 
                 if (product == null || !product.hasBrandAndSize()) {
                     Log.d("BarcodeScanner", "Paid API had no/incomplete result, trying free tier...")
-
                     val freeProduct = tryGetProduct(barcode, existingTireInDb, paid = false)
                     if (freeProduct != null && freeProduct.hasBrandAndSize()) {
                         product = freeProduct
@@ -366,7 +383,6 @@ class MainActivity : AppCompatActivity() {
     private fun saveTireToInventory(product: Product, barcode: String, quantity: Int) {
         val existingTire = tireRepository.getTireByDetails(barcode, product.brand, product.size)
 
-        // Always save to barcode cache so next scan is instant
         tireRepository.saveToCache(barcode, product.brand ?: "", product.size ?: "", product.images?.firstOrNull())
 
         if (existingTire != null) {
