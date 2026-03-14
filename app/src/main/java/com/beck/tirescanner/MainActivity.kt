@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val DATAWEDGE_INTENT_ACTION = "com.beck.tirescanner.SCAN"
         private const val DATAWEDGE_INTENT_CATEGORY = "android.intent.category.DEFAULT"
+        private const val DEFAULT_BARCODE_IMAGE = "https://images.barcodelookup.com/17601/176010350-1.jpg"
     }
 
     private val localBarcodeReceiver = object : BroadcastReceiver() {
@@ -133,7 +134,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 val mode = intent.getStringExtra("MODE") ?: "IN"
 
-                // 1. Check local barcode cache first
+                // Check local barcode cache first
                 val cached = tireRepository.getCachedTire(barcode)
                 if (cached != null) {
                     val cachedProduct = Product(
@@ -147,12 +148,13 @@ class MainActivity : AppCompatActivity() {
                     return@launch
                 }
 
-                // 2. Cache miss — hit the APIs
+                // Cache miss — hit the APIs
                 val existingTireInDb = tireRepository.getTireByBarcode(barcode)
                 var product = tryGetProduct(barcode, existingTireInDb, paid = true)
 
                 if (product == null || !product.hasBrandAndSize()) {
                     Log.d("BarcodeScanner", "Paid API had no/incomplete result, trying free tier...")
+
                     val freeProduct = tryGetProduct(barcode, existingTireInDb, paid = false)
                     if (freeProduct != null && freeProduct.hasBrandAndSize()) {
                         product = freeProduct
@@ -160,7 +162,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (product != null) {
-                    val finalProduct = if (!product.hasBrandAndSize() && existingTireInDb != null) {
+                    val finalProduct = (if (!product.hasBrandAndSize() && existingTireInDb != null) {
                         Product(
                             title = product.title,
                             brand = product.brand?.takeIf { it.isNotEmpty() } ?: existingTireInDb.brand,
@@ -168,7 +170,9 @@ class MainActivity : AppCompatActivity() {
                             images = product.images,
                             barcode = barcode
                         )
-                    } else product
+                    } else product).let { p ->
+                        p.copy(images = p.images?.filter { it != DEFAULT_BARCODE_IMAGE }?.takeIf { it.isNotEmpty() })
+                    }
 
                     if (mode == "IN") {
                         if (!finalProduct.hasBrandAndSize()) {
