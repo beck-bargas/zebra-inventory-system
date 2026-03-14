@@ -20,15 +20,22 @@ data class BarcodeLookupProduct(
 ) {
     fun toProduct(): Product {
         val resolvedBrand = brand?.takeIf { it.isNotEmpty() } ?: manufacturer
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
+
+        val titleMatch = if (!title.isNullOrEmpty()) sizeRegex.find(title) else null
+        val sizeMatch = if (!cleanedSize.isNullOrEmpty()) sizeRegex.find(cleanedSize) else null
+
+        val titleValue = titleMatch?.value?.let { normalizeSize(it) }
+        val sizeValue = sizeMatch?.value?.let { normalizeSize(it) }
+
         val resolvedSize = when {
-            !cleanedSize.isNullOrEmpty() && sizeRegex.containsMatchIn(cleanedSize) ->
-                normalizeSize(sizeRegex.find(cleanedSize)!!.value)
-            !title.isNullOrEmpty() && sizeRegex.containsMatchIn(title) ->
-                normalizeSize(sizeRegex.find(title)!!.value)
+            titleValue != null && sizeValue != null && titleValue.length >= sizeValue.length -> titleValue
+            sizeValue != null -> sizeValue
+            titleValue != null -> titleValue
             else -> null
         }
+
         val finalSize = if (resolvedSize != null && !resolvedSize.startsWith("LT", ignoreCase = true) &&
             title?.contains("light truck", ignoreCase = true) == true) {
             "LT$resolvedSize"
@@ -63,16 +70,23 @@ data class UpcItem(
     val offers: List<Offer>? = null
 ) {
     fun toProduct(): Product {
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
+
+        val titleMatch = if (!title.isNullOrEmpty()) sizeRegex.find(title) else null
+        val sizeMatch = if (!cleanedSize.isNullOrEmpty()) sizeRegex.find(cleanedSize) else null
+
+        val titleValue = titleMatch?.value?.let { normalizeSize(it) }
+        val sizeValue = sizeMatch?.value?.let { normalizeSize(it) }
+
         val resolvedSize = when {
-            !cleanedSize.isNullOrEmpty() && sizeRegex.containsMatchIn(cleanedSize) ->
-                normalizeSize(sizeRegex.find(cleanedSize)!!.value)
-            !title.isNullOrEmpty() && sizeRegex.containsMatchIn(title) ->
-                normalizeSize(sizeRegex.find(title)!!.value)
+            titleValue != null && sizeValue != null && titleValue.length >= sizeValue.length -> titleValue
+            sizeValue != null -> sizeValue
+            titleValue != null -> titleValue
             !dimension.isNullOrEmpty() -> dimension
             else -> null
         }
+
         val finalSize = if (resolvedSize != null && !resolvedSize.startsWith("LT", ignoreCase = true) &&
             title?.contains("light truck", ignoreCase = true) == true) {
             "LT$resolvedSize"
