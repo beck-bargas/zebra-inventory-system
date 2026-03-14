@@ -90,20 +90,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun configureDataWedge() {
-        val dwIntent = Intent()
-        dwIntent.setAction("com.symbol.datawedge.api.ACTION")
-        dwIntent.putExtra("com.symbol.datawedge.api.CREATE_PROFILE", "BarcodeScannerProfile")
-        sendBroadcast(dwIntent)
+        val createIntent = Intent()
+        createIntent.action = "com.symbol.datawedge.api.ACTION"
+        createIntent.putExtra("com.symbol.datawedge.api.CREATE_PROFILE", "BarcodeScannerProfile")
+        sendBroadcast(createIntent)
 
-        val profileBundle = Bundle()
-        profileBundle.putString("PROFILE_NAME", "BarcodeScannerProfile")
-        profileBundle.putString("PROFILE_ENABLED", "true")
-        profileBundle.putString("CONFIG_MODE", "OVERWRITE")
+        val intentBundle = Bundle()
+        intentBundle.putString("PROFILE_NAME", "BarcodeScannerProfile")
+        intentBundle.putString("PROFILE_ENABLED", "true")
+        intentBundle.putString("CONFIG_MODE", "UPDATE")
 
         val appConfig = Bundle()
         appConfig.putString("PACKAGE_NAME", packageName)
         appConfig.putStringArray("ACTIVITY_LIST", arrayOf("*"))
-        profileBundle.putParcelableArray("APP_LIST", arrayOf(appConfig))
+        intentBundle.putParcelableArray("APP_LIST", arrayOf(appConfig))
 
         val intentConfig = Bundle()
         intentConfig.putString("PLUGIN_NAME", "INTENT")
@@ -114,6 +114,17 @@ class MainActivity : AppCompatActivity() {
         intentProps.putString("intent_category", DATAWEDGE_INTENT_CATEGORY)
         intentProps.putInt("intent_delivery", 0)
         intentConfig.putBundle("PARAM_LIST", intentProps)
+        intentBundle.putBundle("PLUGIN_CONFIG", intentConfig)
+
+        val intentProfileIntent = Intent()
+        intentProfileIntent.action = "com.symbol.datawedge.api.ACTION"
+        intentProfileIntent.putExtra("com.symbol.datawedge.api.SET_CONFIG", intentBundle)
+        sendBroadcast(intentProfileIntent)
+
+        val barcodeBundle = Bundle()
+        barcodeBundle.putString("PROFILE_NAME", "BarcodeScannerProfile")
+        barcodeBundle.putString("PROFILE_ENABLED", "true")
+        barcodeBundle.putString("CONFIG_MODE", "UPDATE")
 
         val barcodeConfig = Bundle()
         barcodeConfig.putString("PLUGIN_NAME", "BARCODE")
@@ -133,13 +144,12 @@ class MainActivity : AppCompatActivity() {
         barcodeParams.putString("decoder_aztec", "false")
         barcodeParams.putString("decoder_maxicode", "false")
         barcodeConfig.putBundle("PARAM_LIST", barcodeParams)
+        barcodeBundle.putBundle("PLUGIN_CONFIG", barcodeConfig)
 
-        profileBundle.putParcelableArray("PLUGIN_CONFIG", arrayOf(intentConfig, barcodeConfig))
-
-        val profileIntent = Intent()
-        profileIntent.action = "com.symbol.datawedge.api.ACTION"
-        profileIntent.putExtra("com.symbol.datawedge.api.SET_CONFIG", profileBundle)
-        sendBroadcast(profileIntent)
+        val barcodeProfileIntent = Intent()
+        barcodeProfileIntent.action = "com.symbol.datawedge.api.ACTION"
+        barcodeProfileIntent.putExtra("com.symbol.datawedge.api.SET_CONFIG", barcodeBundle)
+        sendBroadcast(barcodeProfileIntent)
     }
 
     private fun handleBarcodeScanned(barcode: String) {
