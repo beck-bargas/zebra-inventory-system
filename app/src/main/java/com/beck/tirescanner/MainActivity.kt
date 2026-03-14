@@ -172,7 +172,7 @@ class MainActivity : AppCompatActivity() {
                 val cached = tireRepository.getCachedTire(barcode)
                 if (cached != null) {
                     val cachedProduct = Product(
-                        title = "",
+                        title = cached.title,
                         brand = cached.brand,
                         size = cached.size,
                         images = cached.imageUrl?.takeIf { it.isNotEmpty() }?.let { listOf(it) },
@@ -409,7 +409,7 @@ class MainActivity : AppCompatActivity() {
     private fun saveTireToInventory(product: Product, barcode: String, quantity: Int) {
         val existingTire = tireRepository.getTireByDetails(barcode, product.brand, product.size)
 
-        tireRepository.saveToCache(barcode, product.brand ?: "", product.size ?: "", product.images?.firstOrNull())
+        tireRepository.saveToCache(barcode, product.brand ?: "", product.size ?: "", product.images?.firstOrNull(), product.title)
 
         if (existingTire != null) {
             val success = tireRepository.increaseQuantity(existingTire.id, quantity)
