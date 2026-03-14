@@ -32,7 +32,7 @@ class TireAdapter(
 
     override fun onBindViewHolder(holder: TireViewHolder, position: Int) {
         val tire = tires[position]
-        holder.tvBrand.text = tire.brand
+        holder.tvBrand.text = tire.name
         holder.tvSize.text = tire.size
         holder.tvQuantity.text = tire.quantity.toString()
         holder.tvSku.text = "SKU: ${tire.sku}"

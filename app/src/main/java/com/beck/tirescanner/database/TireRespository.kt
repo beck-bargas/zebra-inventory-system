@@ -3,6 +3,7 @@ package com.beck.tirescanner.database
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.util.Log
 import com.beck.tirescanner.models.Product
 
 class TireRepository(context: Context) {
@@ -10,24 +11,29 @@ class TireRepository(context: Context) {
 
     private fun cursorToTireEntry(cursor: android.database.Cursor): TireEntry {
         val skuIndex = cursor.getColumnIndex("sku")
-        val sku = if (skuIndex >= 0 && !cursor.isNull(skuIndex)) {
-            cursor.getString(skuIndex)
-        } else {
-            TireEntry.generateSku()
-        }
+        val sku = if (skuIndex >= 0 && !cursor.isNull(skuIndex)) cursor.getString(skuIndex)
+        else TireEntry.generateSku()
+
+        val nameIndex = cursor.getColumnIndex("name")
+        val brand = cursor.getString(cursor.getColumnIndexOrThrow("brand"))
+        val name = if (nameIndex >= 0 && !cursor.isNull(nameIndex)) cursor.getString(nameIndex)
+        else brand
+
         return TireEntry(
             id = cursor.getInt(cursor.getColumnIndexOrThrow("id")),
             syncId = cursor.getString(cursor.getColumnIndexOrThrow("sync_id")),
             barcode = cursor.getString(cursor.getColumnIndexOrThrow("barcode")),
-            brand = cursor.getString(cursor.getColumnIndexOrThrow("brand")),
+            brand = brand,
             size = cursor.getString(cursor.getColumnIndexOrThrow("size")),
             quantity = cursor.getInt(cursor.getColumnIndexOrThrow("quantity")),
             imageUrl = cursor.getString(cursor.getColumnIndexOrThrow("image_url")),
-            sku = sku
+            sku = sku,
+            name = name
         )
     }
 
     // ── Barcode Cache ──────────────────────────────────────────────────────────
+
     fun saveToCache(barcode: String, brand: String, size: String, imageUrl: String?) {
         val db = dbHelper.writableDatabase
         val values = ContentValues().apply {
@@ -61,9 +67,7 @@ class TireRepository(context: Context) {
         val db = dbHelper.readableDatabase
         val tires = mutableListOf<TireEntry>()
         val cursor = db.query("tires", null, null, null, null, null, "brand ASC")
-        while (cursor.moveToNext()) {
-            tires.add(cursorToTireEntry(cursor))
-        }
+        while (cursor.moveToNext()) tires.add(cursorToTireEntry(cursor))
         cursor.close()
         return tires
     }
@@ -102,20 +106,22 @@ class TireRepository(context: Context) {
         val tires = mutableListOf<TireEntry>()
         val cursor = db.query(
             "tires", null,
-            "brand LIKE ? OR size LIKE ?",
-            arrayOf("%$query%", "%$query%"),
+            "brand LIKE ? OR size LIKE ? OR name LIKE ?",
+            arrayOf("%$query%", "%$query%", "%$query%"),
             null, null, "brand ASC"
         )
-        while (cursor.moveToNext()) {
-            tires.add(cursorToTireEntry(cursor))
-        }
+        while (cursor.moveToNext()) tires.add(cursorToTireEntry(cursor))
         cursor.close()
         return tires
     }
 
     fun insertTire(product: Product, barcode: String, quantity: Int): Long {
         val db = dbHelper.writableDatabase
+
         val existingSku = getTireByBarcode(barcode)?.sku ?: TireEntry.generateSku()
+        val name = TireEntry.extractNameFromTitle(product.title, product.mpn)
+            ?: product.brand
+            ?: ""
         val values = ContentValues().apply {
             put("sync_id", java.util.UUID.randomUUID().toString())
             put("barcode", barcode)
@@ -124,7 +130,9 @@ class TireRepository(context: Context) {
             put("quantity", quantity)
             put("image_url", product.images?.firstOrNull() ?: "")
             put("sku", existingSku)
+            put("name", name)
         }
+        Log.d("TireName", "title='${product.title}' mpn='${product.mpn}' name='$name'")
         return db.insert("tires", null, values)
     }
 
@@ -189,11 +197,11 @@ class TireRepository(context: Context) {
                     put("quantity", remote.quantity)
                     put("image_url", remote.imageUrl ?: "")
                     put("sku", remote.sku)
+                    put("name", remote.name)
                 }
                 db.insert("tires", null, values)
             }
             cursor.close()
-
             saveToCache(remote.barcode, remote.brand, remote.size, remote.imageUrl)
         }
     }

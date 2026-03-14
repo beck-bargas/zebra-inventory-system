@@ -2,10 +2,12 @@ package com.beck.tirescanner
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.beck.tirescanner.database.TireEntry
 import com.beck.tirescanner.database.TireRepository
 import com.beck.tirescanner.network.RetrofitClient
 import com.beck.tirescanner.network.SyncManager
@@ -53,6 +55,11 @@ class HomeActivity : AppCompatActivity() {
             val intent = Intent(this, InventoryActivity::class.java)
             startActivity(intent)
         }
+        val test = TireEntry.extractNameFromTitle(
+            "Cooper Commuter All-Season 205/60R16 92H Tire",
+            null
+        )
+        Log.d("TireName", "result: $test")
     }
 
     override fun onResume() {

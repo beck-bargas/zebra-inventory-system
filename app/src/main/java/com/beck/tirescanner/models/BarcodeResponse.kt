@@ -15,17 +15,18 @@ data class BarcodeLookupProduct(
     val size: String? = null,
     val images: List<String>? = null,
     @SerializedName("barcode_number")
-    val barcode: String? = null
+    val barcode: String? = null,
+    val mpn: String? = null
 ) {
     fun toProduct(): Product {
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}/\d{2}R\d{2}""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
         val resolvedSize = when {
             !size.isNullOrEmpty() -> size
             !title.isNullOrEmpty() && sizeRegex.containsMatchIn(title) ->
-                sizeRegex.find(title)!!.value.trim()
+                sizeRegex.find(title)!!.value.replace(Regex("\\s"), "").trim()
             else -> null
         }
-        return Product(title = title, brand = brand, size = resolvedSize, images = images, barcode = barcode)
+        return Product(title = title, brand = brand, size = resolvedSize, images = images, barcode = barcode, mpn = mpn)
     }
 }
 
@@ -49,11 +50,11 @@ data class UpcItem(
     val offers: List<Offer>? = null
 ) {
     fun toProduct(): Product {
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}/\d{2}R\d{2}""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
         val resolvedSize = when {
             !size.isNullOrEmpty() -> size
             !title.isNullOrEmpty() && sizeRegex.containsMatchIn(title) ->
-                sizeRegex.find(title)!!.value.trim()
+                sizeRegex.find(title)!!.value.replace(Regex("\\s"), "").trim()
             !dimension.isNullOrEmpty() -> dimension
             else -> null
         }
@@ -81,7 +82,8 @@ data class Product(
     val size: String? = null,
     val brand: String? = null,
     val images: List<String>? = null,
-    val barcode: String? = null
+    val barcode: String? = null,
+    val mpn: String? = null
 ) {
     fun hasBrandAndSize(): Boolean = !brand.isNullOrEmpty() && !size.isNullOrEmpty()
 
