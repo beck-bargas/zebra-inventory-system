@@ -375,7 +375,7 @@ class MainActivity : AppCompatActivity() {
             val fullSize = if (prefix == "None") sizeNumbers else "$prefix $sizeNumbers"
 
             if (name.isNotEmpty() && sizeNumbers.isNotEmpty()) {
-                val manualProduct = Product(title = name, brand = product?.brand ?: name, size = fullSize, images = null, barcode = barcode, mpn = product?.mpn)
+                val manualProduct = Product(title = name, brand = product?.brand ?: name, size = fullSize, images = product?.images, barcode = barcode, mpn = product?.mpn)
                 askAmount(manualProduct, barcode)
                 dialog.dismiss()
             }
