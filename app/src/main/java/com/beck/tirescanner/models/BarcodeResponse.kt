@@ -12,6 +12,7 @@ data class BarcodeLookupResponse(
 data class BarcodeLookupProduct(
     val title: String? = null,
     val brand: String? = null,
+    val manufacturer: String? = null,
     val size: String? = null,
     val images: List<String>? = null,
     @SerializedName("barcode_number")
@@ -19,6 +20,7 @@ data class BarcodeLookupProduct(
     val mpn: String? = null
 ) {
     fun toProduct(): Product {
+        val resolvedBrand = brand?.takeIf { it.isNotEmpty() } ?: manufacturer
         val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
         val resolvedSize = when {
@@ -28,7 +30,7 @@ data class BarcodeLookupProduct(
                 sizeRegex.find(title)!!.value.replace(Regex("\\s"), "").trim()
             else -> null
         }
-        return Product(title = title, brand = brand, size = resolvedSize, images = images, barcode = barcode, mpn = mpn)
+        return Product(title = title, brand = resolvedBrand, size = resolvedSize, images = images, barcode = barcode, mpn = mpn)
     }
 }
 
