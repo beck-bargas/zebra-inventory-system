@@ -29,7 +29,11 @@ data class BarcodeLookupProduct(
                 sizeRegex.find(title)!!.value.replace(Regex("\\s"), "").trim()
             else -> null
         }
-        return Product(title = title, brand = resolvedBrand, size = resolvedSize, images = images, barcode = barcode, mpn = mpn)
+        val finalSize = if (resolvedSize != null && !resolvedSize.startsWith("LT", ignoreCase = true) &&
+            title?.contains("light truck", ignoreCase = true) == true) {
+            "LT$resolvedSize"
+        } else resolvedSize
+        return Product(title = title, brand = resolvedBrand, size = finalSize, images = images, barcode = barcode, mpn = mpn)
     }
 }
 
@@ -62,7 +66,11 @@ data class UpcItem(
             !dimension.isNullOrEmpty() -> dimension
             else -> null
         }
-        return Product(title = title, brand = brand, size = resolvedSize, images = images, barcode = upc ?: ean)
+        val finalSize = if (resolvedSize != null && !resolvedSize.startsWith("LT", ignoreCase = true) &&
+            title?.contains("light truck", ignoreCase = true) == true) {
+            "LT$resolvedSize"
+        } else resolvedSize
+        return Product(title = title, brand = brand, size = finalSize, images = images, barcode = upc ?: ean)
     }
 }
 
