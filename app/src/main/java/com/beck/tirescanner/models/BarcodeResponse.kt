@@ -2,7 +2,6 @@ package com.beck.tirescanner.models
 
 import com.google.gson.annotations.SerializedName
 
-// ---- Barcode Lookup (paid) ----
 data class BarcodeLookupResponse(
     val products: List<BarcodeLookupProduct> = emptyList()
 ) {
@@ -34,7 +33,6 @@ data class BarcodeLookupProduct(
     }
 }
 
-// ---- UPCitemdb (free fallback) ----
 data class UpcItemdbResponse(
     val code: String? = null,
     val total: Int = 0,
@@ -54,7 +52,7 @@ data class UpcItem(
     val offers: List<Offer>? = null
 ) {
     fun toProduct(): Product {
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
         val resolvedSize = when {
             !cleanedSize.isNullOrEmpty() && sizeRegex.containsMatchIn(cleanedSize) ->
@@ -82,7 +80,6 @@ data class Offer(
     val updatedT: Long? = null
 )
 
-// ---- Shared internal model ----
 data class Product(
     val title: String? = null,
     val size: String? = null,

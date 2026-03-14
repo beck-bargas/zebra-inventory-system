@@ -344,14 +344,22 @@ class MainActivity : AppCompatActivity() {
         tireSizeInput.addTextChangedListener(TireSizeTextWatcher(tireSizeInput))
 
         if (product != null) {
-            val parsedName = TireEntry.extractNameFromTitle(product.title, product.mpn)
-                ?: tireRepository.getTireByBarcode(barcode)?.name
-                ?: product.brand.orEmpty()
+            val parsedName = TireEntry.extractNameFromTitle(product.title, product.mpn) ?: product.brand.orEmpty()
             brandInput.setText(parsedName)
             val sizeWithPrefix = product.size.orEmpty()
             when {
-                sizeWithPrefix.startsWith("P ") -> { tirePrefixSpinner.setSelection(1); tireSizeInput.setText(sizeWithPrefix.substring(2)) }
-                sizeWithPrefix.startsWith("LT ") -> { tirePrefixSpinner.setSelection(2); tireSizeInput.setText(sizeWithPrefix.substring(3)) }
+                sizeWithPrefix.startsWith("P ") || (sizeWithPrefix.startsWith("P") && sizeWithPrefix.length > 1 && sizeWithPrefix[1].isDigit()) -> {
+                    tirePrefixSpinner.setSelection(1)
+                    tireSizeInput.setText(sizeWithPrefix.removePrefix("P ").removePrefix("P"))
+                }
+                sizeWithPrefix.startsWith("LT ") || (sizeWithPrefix.startsWith("LT") && sizeWithPrefix.length > 2 && sizeWithPrefix[2].isDigit()) -> {
+                    tirePrefixSpinner.setSelection(2)
+                    tireSizeInput.setText(sizeWithPrefix.removePrefix("LT ").removePrefix("LT"))
+                }
+                sizeWithPrefix.startsWith("ST ") || (sizeWithPrefix.startsWith("ST") && sizeWithPrefix.length > 2 && sizeWithPrefix[2].isDigit()) -> {
+                    tirePrefixSpinner.setSelection(3)
+                    tireSizeInput.setText(sizeWithPrefix.removePrefix("ST ").removePrefix("ST"))
+                }
                 else -> tireSizeInput.setText(sizeWithPrefix)
             }
         }
