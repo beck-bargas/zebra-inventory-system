@@ -77,6 +77,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        lifecycleScope.launch {
+            syncManager.pullFromWeb { result ->
+                Log.d("SyncManager", "Pull: $result")
+            }
+        }
         val filter = IntentFilter("com.beck.tirescanner.LOCAL_SCAN")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(localBarcodeReceiver, filter, RECEIVER_NOT_EXPORTED)

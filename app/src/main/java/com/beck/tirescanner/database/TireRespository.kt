@@ -182,11 +182,14 @@ class TireRepository(context: Context) {
         for (remote in remoteTires) {
             val cursor = db.query("tires", null, "sync_id = ?", arrayOf(remote.syncId), null, null, null)
             if (cursor.moveToFirst()) {
-                val localQty = cursor.getInt(cursor.getColumnIndexOrThrow("quantity"))
-                if (remote.quantity > localQty) {
-                    val values = ContentValues().apply { put("quantity", remote.quantity) }
-                    db.update("tires", values, "sync_id = ?", arrayOf(remote.syncId))
+                val values = ContentValues().apply {
+                    put("quantity", remote.quantity)
+                    put("name", remote.name)
+                    put("sku", remote.sku)
+                    put("size", remote.size)
+                    put("brand", remote.brand)
                 }
+                db.update("tires", values, "sync_id = ?", arrayOf(remote.syncId))
             } else {
                 val values = ContentValues().apply {
                     put("sync_id", remote.syncId)
