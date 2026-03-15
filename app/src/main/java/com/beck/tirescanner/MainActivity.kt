@@ -329,7 +329,7 @@ class MainActivity : AppCompatActivity() {
         val constructions = arrayOf("R", "D", "B")
         tireConstructionSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, constructions)
 
-        val loadRanges = arrayOf("None", "C", "D", "E", "F")
+        val loadRanges = arrayOf("None", "C", "D", "E", "F", "G")
         plyRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, loadRanges)
 
         if (product != null) {
@@ -339,7 +339,7 @@ class MainActivity : AppCompatActivity() {
             brandInput.setText(parsedName)
 
             val size = product.size.orEmpty()
-            val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?\s*([A-Z]{1,2})?\s*([C-F])?""", RegexOption.IGNORE_CASE)
+            val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?\s*([A-Z]{1,2})?\s*([C-G])?""", RegexOption.IGNORE_CASE)
             val match = sizeRegex.find(size)
             Log.d("TireSize", "size to parse: '${product.size}'")
             if (match != null) {
@@ -360,7 +360,7 @@ class MainActivity : AppCompatActivity() {
                 tireDiameterInput.setText(diameter)
                 var speedRatingVal = speedRating
                 var loadRangeVal = loadRange
-                if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-F]", RegexOption.IGNORE_CASE)) && loadIndex.isEmpty()) {
+                if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-G]", RegexOption.IGNORE_CASE)) && loadIndex.isEmpty()) {
                     loadRangeVal = speedRatingVal.uppercase()
                     speedRatingVal = ""
                 }

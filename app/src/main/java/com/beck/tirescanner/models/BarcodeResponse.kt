@@ -21,7 +21,7 @@ data class BarcodeLookupProduct(
     fun toProduct(): Product {
         val resolvedBrand = brand?.takeIf { it.isNotEmpty() } ?: manufacturer
         val baseSizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
 
         val deduplicatedTitle = deduplicateSizes(title, baseSizeRegex)
@@ -44,7 +44,7 @@ data class BarcodeLookupProduct(
         } else resolvedSize
 
         val loadRange = detectLoadRange(title)
-        if (loadRange != null && finalSize != null && !finalSize.contains(Regex("[C-F]$"))) {
+        if (loadRange != null && finalSize != null && !finalSize.contains(Regex("[C-G]$"))) {
             finalSize = "$finalSize $loadRange"
         }
 
@@ -82,7 +82,9 @@ data class BarcodeLookupProduct(
         }
         val loadRangeMatch = Regex("""\bLoad\s+Range\s+([A-F])\b""", RegexOption.IGNORE_CASE).find(title)
         if (loadRangeMatch != null) return loadRangeMatch.groupValues[1].uppercase()
-        val standaloneMatch = Regex("""\b([C-F])\b""", RegexOption.IGNORE_CASE).find(title)
+        val standaloneMatch = Regex("""\b([C-G])\b""", RegexOption.IGNORE_CASE)
+            .findAll(title)
+            .lastOrNull { it.groupValues[1].uppercase() in listOf("C","D","E","F","G") }
         if (standaloneMatch != null) return standaloneMatch.groupValues[1].uppercase()
         return null
     }
@@ -108,7 +110,7 @@ data class UpcItem(
 ) {
     fun toProduct(): Product {
         val baseSizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
 
         val deduplicatedTitle = deduplicateSizes(title, baseSizeRegex)
@@ -132,7 +134,7 @@ data class UpcItem(
         } else resolvedSize
 
         val loadRange = detectLoadRange(title)
-        if (loadRange != null && finalSize != null && !finalSize.contains(Regex("[C-F]$"))) {
+        if (loadRange != null && finalSize != null && !finalSize.contains(Regex("[C-G]$"))) {
             finalSize = "$finalSize $loadRange"
         }
 
@@ -168,9 +170,9 @@ data class UpcItem(
             val ply = plyMatch.groupValues[1].toIntOrNull()
             return plyToLoadRange[ply]
         }
-        val loadRangeMatch = Regex("""\bLoad\s+Range\s+([A-F])\b""", RegexOption.IGNORE_CASE).find(title)
+        val loadRangeMatch = Regex("""\bLoad\s+Range\s+([C-G])\b""", RegexOption.IGNORE_CASE).find(title)
         if (loadRangeMatch != null) return loadRangeMatch.groupValues[1].uppercase()
-        val standaloneMatch = Regex("""\b([C-F])\b""", RegexOption.IGNORE_CASE).find(title)
+        val standaloneMatch = Regex("""\b([C-G])\b""", RegexOption.IGNORE_CASE).find(title)
         if (standaloneMatch != null) return standaloneMatch.groupValues[1].uppercase()
         return null
     }
