@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var barcodeText: TextView
     private lateinit var responseText: TextView
     private lateinit var clearButton: Button
+    private var isDialogShowing = false
 
     companion object {
         private const val DATAWEDGE_INTENT_ACTION = "com.beck.tirescanner.SCAN"
@@ -90,12 +91,31 @@ class MainActivity : AppCompatActivity() {
         try { unregisterReceiver(localBarcodeReceiver) } catch (_: IllegalArgumentException) {}
     }
 
+    private fun setScannerEnabled(enabled: Boolean) {
+        val bundle = Bundle()
+        bundle.putString("PROFILE_NAME", "BarcodeScannerProfile")
+        bundle.putString("PROFILE_ENABLED", "true")
+        bundle.putString("CONFIG_MODE", "UPDATE")
+        val barcodeConfig = Bundle()
+        barcodeConfig.putString("PLUGIN_NAME", "BARCODE")
+        barcodeConfig.putString("RESET_CONFIG", "false")
+        val barcodeParams = Bundle()
+        barcodeParams.putString("scanner_input_enabled", if (enabled) "true" else "false")
+        barcodeConfig.putBundle("PARAM_LIST", barcodeParams)
+        bundle.putBundle("PLUGIN_CONFIG", barcodeConfig)
+        val dwIntent = Intent()
+        dwIntent.action = "com.symbol.datawedge.api.ACTION"
+        dwIntent.putExtra("com.symbol.datawedge.api.SET_CONFIG", bundle)
+        sendBroadcast(dwIntent)
+    }
+
     private fun handleBarcodeScanned(barcode: String) {
         runOnUiThread { barcodeText.text = barcode }
         sendBarcodeToAPI(barcode)
     }
 
     private fun sendBarcodeToAPI(barcode: String) {
+        if (isDialogShowing) return
         lifecycleScope.launch {
             try {
                 val mode = intent.getStringExtra("MODE") ?: "IN"
@@ -203,6 +223,10 @@ class MainActivity : AppCompatActivity() {
 
             val dialog = AlertDialog.Builder(this@MainActivity).setView(dialogView).create()
 
+            setScannerEnabled(false)
+            isDialogShowing = true
+            dialog.setOnDismissListener { setScannerEnabled(true); isDialogShowing = false }
+
             confirmButton.setOnClickListener {
                 dialog.dismiss()
                 if (mode == "IN") askAmount(product, barcode)
@@ -237,6 +261,9 @@ class MainActivity : AppCompatActivity() {
         input.hint = "Max: ${existingTire.quantity}"
 
         val dialog = AlertDialog.Builder(this).setView(dialogView).create()
+        setScannerEnabled(false)
+        isDialogShowing = true
+        dialog.setOnDismissListener { setScannerEnabled(true); isDialogShowing = false }
         dialog.show()
 
         cancelButton.setOnClickListener { dialog.dismiss() }
@@ -326,6 +353,10 @@ class MainActivity : AppCompatActivity() {
 
         val dialog = AlertDialog.Builder(this).setTitle("Enter Tire Information").setView(dialogView).create()
 
+        setScannerEnabled(false)
+        isDialogShowing = true
+        dialog.setOnDismissListener { setScannerEnabled(true); isDialogShowing = false }
+
         cancelButton.setOnClickListener { dialog.dismiss() }
 
         confirmButton.setOnClickListener {
@@ -366,6 +397,9 @@ class MainActivity : AppCompatActivity() {
         val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
 
         val dialog = AlertDialog.Builder(this).setView(dialogView).create()
+        setScannerEnabled(false)
+        isDialogShowing = true
+        dialog.setOnDismissListener { setScannerEnabled(true); isDialogShowing = false }
         dialog.show()
 
         cancelButton.setOnClickListener { dialog.dismiss() }
