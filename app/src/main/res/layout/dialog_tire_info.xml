@@ -34,8 +34,9 @@
             <ImageView
                 android:id="@+id/tireImage"
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
-                android:scaleType="centerCrop"
+                android:layout_height="wrap_content"
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
                 android:padding="16dp"
                 android:background="@android:color/white"
                 android:contentDescription="Tire image" />
