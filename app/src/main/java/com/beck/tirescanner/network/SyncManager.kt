@@ -194,4 +194,41 @@ class SyncManager(
             false
         }
     }
+
+    suspend fun syncToWeb(onResult: (String) -> Unit) {
+        withContext(Dispatchers.IO) {
+            try {
+                val tires = tireRepository.getAllTires()
+                val json = gson.toJson(tires)
+
+                val url = URL("http://inventory.nixsauto.com/api.php?action=sync")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.doOutput = true
+                conn.setRequestProperty("Content-Type", "application/json")
+                conn.setRequestProperty("x-sync-token", syncToken)
+                conn.connectTimeout = 10000
+                conn.readTimeout = 10000
+
+                val writer = OutputStreamWriter(conn.outputStream)
+                writer.write(json)
+                writer.flush()
+                writer.close()
+
+                val code = conn.responseCode
+                val response = conn.inputStream.bufferedReader().readText()
+                conn.disconnect()
+
+                Log.d("SyncManager", "Web sync response $code: $response")
+
+                withContext(Dispatchers.Main) {
+                    if (code == 200) onResult("Synced to website successfully")
+                    else onResult("Web sync failed (HTTP $code)")
+                }
+            } catch (e: Exception) {
+                Log.e("SyncManager", "Web sync error: ${e.message}", e)
+                withContext(Dispatchers.Main) { onResult("Web sync error: ${e.message}") }
+            }
+        }
+    }
 }

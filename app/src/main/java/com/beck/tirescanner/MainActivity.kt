@@ -22,11 +22,13 @@ import com.beck.tirescanner.database.TireEntry
 import com.beck.tirescanner.database.TireRepository
 import com.beck.tirescanner.models.Product
 import com.beck.tirescanner.network.RetrofitClient
+import com.beck.tirescanner.network.SyncManager
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tireRepository: TireRepository
+    private lateinit var syncManager: SyncManager
     private lateinit var barcodeText: TextView
     private lateinit var responseText: TextView
     private lateinit var clearButton: Button
@@ -51,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         tireRepository = TireRepository(this)
+        syncManager = SyncManager(this, tireRepository, BuildConfig.SYNC_TOKEN)
         barcodeText = findViewById(R.id.barcodeText)
         responseText = findViewById(R.id.responseText)
         clearButton = findViewById(R.id.clearButton)
@@ -465,6 +468,13 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Added $quantity new tires", Toast.LENGTH_LONG).show()
             } else {
                 Toast.makeText(this, "Error saving tire", Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+
+        lifecycleScope.launch {
+            syncManager.syncToWeb { result ->
+                Log.d("MainActivity", "Web sync: $result")
             }
         }
     }
