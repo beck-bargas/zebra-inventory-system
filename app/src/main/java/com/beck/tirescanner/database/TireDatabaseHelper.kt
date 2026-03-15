@@ -35,8 +35,9 @@ data class TireEntry(
                 "(?<!Cooper )\\bTire\\b", "\\bTires\\b", "\\bBSW\\b", "\\bWSW\\b",
                 "\\bOWL\\b", "\\bRWL\\b", "\\bXL\\b", "\\bSL\\b",
                 "\\bHigh[- ]Performance\\b", "\\b\\d{2,3}[A-Z]{1,2}\\b",
-                "\\bAll[- ]Terrain\\b", "\\bCommercial\\b", "\\bLight Truck\\b"
-            )
+                "\\bAll[- ]Terrain\\b", "\\bCommercial\\b", "\\bLight Truck\\b",
+                "\\b\\d{2,3}\\s+[A-Z]\\b",
+                )
             for (junk in junkWords) {
                 cleaned = cleaned?.replace(Regex(junk, RegexOption.IGNORE_CASE), "")
             }

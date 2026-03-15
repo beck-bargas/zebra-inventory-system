@@ -21,7 +21,7 @@ data class BarcodeLookupProduct(
     fun toProduct(): Product {
         val resolvedBrand = brand?.takeIf { it.isNotEmpty() } ?: manufacturer
         val baseSizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
 
         val deduplicatedTitle = deduplicateSizes(title, baseSizeRegex)
@@ -108,7 +108,7 @@ data class UpcItem(
 ) {
     fun toProduct(): Product {
         val baseSizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
-        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
+        val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
 
         val deduplicatedTitle = deduplicateSizes(title, baseSizeRegex)

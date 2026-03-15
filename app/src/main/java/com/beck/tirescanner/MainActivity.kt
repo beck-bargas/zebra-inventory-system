@@ -339,8 +339,9 @@ class MainActivity : AppCompatActivity() {
             brandInput.setText(parsedName)
 
             val size = product.size.orEmpty()
-            val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?([A-Z]{1,2})?\s*([C-F])?""", RegexOption.IGNORE_CASE)
+            val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?\s*([A-Z]{1,2})?\s*([C-F])?""", RegexOption.IGNORE_CASE)
             val match = sizeRegex.find(size)
+            Log.d("TireSize", "size to parse: '${product.size}'")
             if (match != null) {
                 val typeStr = match.groupValues[1]
                 val width = match.groupValues[2]
