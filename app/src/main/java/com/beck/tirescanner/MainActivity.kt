@@ -295,6 +295,11 @@ class MainActivity : AppCompatActivity() {
                         val newTotal = existingTire.quantity - amountToRemove
                         if (newTotal == 0) Toast.makeText(this, "Removed all tires. Entry deleted.", Toast.LENGTH_LONG).show()
                         else Toast.makeText(this, "Removed $amountToRemove tires. Remaining: $newTotal", Toast.LENGTH_LONG).show()
+                        lifecycleScope.launch {
+                            syncManager.syncToWeb { result ->
+                                Log.d("MainActivity", "Web sync: $result")
+                            }
+                        }
                     } else {
                         Toast.makeText(this, "Error removing tires", Toast.LENGTH_SHORT).show()
                     }
