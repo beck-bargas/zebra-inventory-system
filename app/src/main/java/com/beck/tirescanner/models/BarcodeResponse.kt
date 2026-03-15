@@ -60,7 +60,7 @@ data class BarcodeLookupProduct(
         val toRemove = if (prefixed != null) matches.filter { it != prefixed } else matches.drop(1)
         var result = title
         for (m in toRemove.sortedByDescending { it.range.first }) {
-            result = result?.removeRange(m.range)
+            result = result?.removeRange(m.range) ?: result
         }
         return result?.replace(Regex("\\s+"), " ")?.trim()
     }
@@ -148,7 +148,8 @@ data class UpcItem(
         val toRemove = if (prefixed != null) matches.filter { it != prefixed } else matches.drop(1)
         var result = title
         for (m in toRemove.sortedByDescending { it.range.first }) {
-            result = result?.removeRange(m.range) ?: result        }
+            result = result?.removeRange(m.range) ?: result
+        }
         return result?.replace(Regex("\\s+"), " ")?.trim()
     }
 

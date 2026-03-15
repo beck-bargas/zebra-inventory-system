@@ -197,11 +197,14 @@
                 android:textSize="13sp"
                 android:textColor="#666666" />
 
-            <Spinner
-                android:id="@+id/tireSpeedRatingSpinner"
-                android:layout_width="wrap_content"
+            <EditText
+                android:id="@+id/tireSpeedRatingInput"
+                android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:minWidth="80dp" />
+                android:hint="S"
+                android:inputType="textCapCharacters"
+                android:maxLength="1"
+                android:textSize="16sp" />
 
         </LinearLayout>
 

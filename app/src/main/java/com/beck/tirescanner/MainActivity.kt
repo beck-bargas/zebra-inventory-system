@@ -339,7 +339,7 @@ class MainActivity : AppCompatActivity() {
         val tireConstructionSpinner = dialogView.findViewById<Spinner>(R.id.tireConstructionSpinner)
         val tireDiameterInput = dialogView.findViewById<EditText>(R.id.tireDiameterInput)
         val tireLoadIndexInput = dialogView.findViewById<EditText>(R.id.tireLoadIndexInput)
-        val tireSpeedRatingSpinner = dialogView.findViewById<Spinner>(R.id.tireSpeedRatingSpinner)
+        val tireSpeedRatingInput = dialogView.findViewById<EditText>(R.id.tireSpeedRatingInput)
         val plyRatingSpinner = dialogView.findViewById<Spinner>(R.id.plyRatingSpinner)
         val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
         val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
@@ -349,9 +349,6 @@ class MainActivity : AppCompatActivity() {
 
         val constructions = arrayOf("R", "D", "B")
         tireConstructionSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, constructions)
-
-        val speedRatings = arrayOf("None", "Q", "R", "S", "T", "H", "V", "W", "Y", "Z")
-        tireSpeedRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, speedRatings)
 
         val loadRanges = arrayOf("None", "C", "D", "E", "F")
         plyRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, loadRanges)
@@ -388,8 +385,7 @@ class MainActivity : AppCompatActivity() {
                     speedRatingVal = ""
                 }
                 tireLoadIndexInput.setText(loadIndex)
-                val speedIndex = speedRatings.indexOfFirst { it.equals(speedRatingVal, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
-                tireSpeedRatingSpinner.setSelection(speedIndex)
+                tireSpeedRatingInput.setText(speedRatingVal.uppercase())
                 val loadRangeIndex = loadRanges.indexOfFirst { it.equals(loadRangeVal, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
                 plyRatingSpinner.setSelection(loadRangeIndex)
             }
@@ -407,14 +403,14 @@ class MainActivity : AppCompatActivity() {
             val construction = tireConstructionSpinner.selectedItem.toString()
             val diameter = tireDiameterInput.text.toString()
             val loadIndex = tireLoadIndexInput.text.toString()
-            val speedRating = tireSpeedRatingSpinner.selectedItem.toString()
+            val speedRating = tireSpeedRatingInput.text.toString().uppercase()
             val loadRange = plyRatingSpinner.selectedItem.toString()
 
             val fullSize = buildString {
                 if (prefix != "None") append("$prefix ")
                 append("$width/$ratio$construction$diameter")
                 if (loadIndex.isNotEmpty()) append(" $loadIndex")
-                if (speedRating != "None") append(speedRating)
+                if (speedRating.isNotEmpty()) append(speedRating)
                 if (loadRange != "None") append(" $loadRange")
             }
 
