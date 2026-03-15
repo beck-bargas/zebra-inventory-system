@@ -207,4 +207,16 @@ class TireRepository(context: Context) {
             saveToCache(remote.barcode, remote.brand, remote.size, remote.imageUrl, remote.name)
         }
     }
+    fun deleteNotInList(syncIds: List<String>) {
+        Log.d("TireRepo", "deleteNotInList called with ${syncIds.size} ids")
+        val db = dbHelper.writableDatabase
+        if (syncIds.isEmpty()) {
+            val deleted = db.delete("tires", null, null)
+            Log.d("TireRepo", "Deleted all: $deleted rows")
+            return
+        }
+        val placeholders = syncIds.joinToString(",") { "?" }
+        val deleted = db.delete("tires", "sync_id NOT IN ($placeholders)", syncIds.toTypedArray())
+        Log.d("TireRepo", "Deleted $deleted rows not in list")
+    }
 }

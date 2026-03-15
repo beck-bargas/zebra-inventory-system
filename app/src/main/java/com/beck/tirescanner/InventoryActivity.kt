@@ -69,6 +69,15 @@ class InventoryActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch {
+            syncManager.pullFromWeb {
+                loadInventory()
+            }
+        }
+    }
+
     private fun syncToWeb() {
         lifecycleScope.launch {
             syncManager.syncToWeb { result ->

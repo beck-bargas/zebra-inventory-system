@@ -16,6 +16,7 @@ class SyncManager(
     private val syncToken: String
 ) {
     private val gson = Gson()
+
     suspend fun syncToWeb(onResult: (String) -> Unit) {
         withContext(Dispatchers.IO) {
             try {
@@ -62,6 +63,7 @@ class SyncManager(
 
                 val remoteTires = gson.fromJson(response, Array<com.beck.tirescanner.database.TireEntry>::class.java).toList()
                 tireRepository.upsertTires(remoteTires)
+                tireRepository.deleteNotInList(remoteTires.mapNotNull { it.syncId })
 
                 withContext(Dispatchers.Main) { onResult("Pulled ${remoteTires.size} tires from web") }
             } catch (e: Exception) {
