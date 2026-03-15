@@ -260,6 +260,19 @@ class MainActivity : AppCompatActivity() {
         dialogView.findViewById<TextView>(R.id.etTitle).text = "Remove Quantity"
         input.hint = "Max: ${existingTire.quantity}"
 
+        confirmButton.isEnabled = false
+        confirmButton.alpha = 0.5f
+
+        input.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val valid = s.toString().toIntOrNull()?.let { it > 0 } ?: false
+                confirmButton.isEnabled = valid
+                confirmButton.alpha = if (valid) 1.0f else 0.5f
+            }
+        })
+
         val dialog = AlertDialog.Builder(this).setView(dialogView).create()
         setScannerEnabled(false)
         isDialogShowing = true
@@ -284,8 +297,6 @@ class MainActivity : AppCompatActivity() {
                     }
                     dialog.dismiss()
                 }
-            } else {
-                Toast.makeText(this, "Please enter a valid quantity", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -396,6 +407,19 @@ class MainActivity : AppCompatActivity() {
         val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
         val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
 
+        confirmButton.isEnabled = false
+        confirmButton.alpha = 0.5f
+
+        input.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val valid = s.toString().toIntOrNull()?.let { it > 0 } ?: false
+                confirmButton.isEnabled = valid
+                confirmButton.alpha = if (valid) 1.0f else 0.5f
+            }
+        })
+
         val dialog = AlertDialog.Builder(this).setView(dialogView).create()
         setScannerEnabled(false)
         isDialogShowing = true
@@ -409,8 +433,6 @@ class MainActivity : AppCompatActivity() {
             if (amount != null && amount > 0) {
                 dialog.dismiss()
                 saveTireToInventory(product, barcode, amount)
-            } else {
-                Toast.makeText(this, "Please enter a valid amount", Toast.LENGTH_SHORT).show()
             }
         }
     }
