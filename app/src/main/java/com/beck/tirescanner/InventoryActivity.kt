@@ -1,9 +1,12 @@
 package com.beck.tirescanner
 
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -50,6 +53,14 @@ class InventoryActivity : AppCompatActivity() {
                 if (query.isEmpty()) loadInventory() else searchInventory(query)
             }
         })
+
+        searchBar.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(searchBar.windowToken, 0)
+                true
+            } else false
+        }
     }
 
     private fun loadInventory() {
