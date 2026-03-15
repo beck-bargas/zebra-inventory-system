@@ -196,7 +196,8 @@ class MainActivity : AppCompatActivity() {
                 imageView.setImageResource(R.drawable.placeholder)
             }
 
-            dialogView.findViewById<TextView>(R.id.tvTitle).text = product.title
+            dialogView.findViewById<TextView>(R.id.tvTitle).text =
+                TireEntry.extractNameFromTitle(product.title, product.mpn) ?: product.title
             dialogView.findViewById<TextView>(R.id.tvSize).text = product.size
             dialogView.findViewById<TextView>(R.id.tvBrand).text = product.brand
 
