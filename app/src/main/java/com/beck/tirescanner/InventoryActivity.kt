@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -12,13 +13,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.beck.tirescanner.database.TireRepository
+import com.beck.tirescanner.network.SyncManager
 import com.google.android.material.appbar.MaterialToolbar
+import kotlinx.coroutines.launch
 
 class InventoryActivity : AppCompatActivity() {
     private lateinit var tireRepository: TireRepository
+    private lateinit var syncManager: SyncManager
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: TireAdapter
     private lateinit var searchBar: EditText
@@ -29,6 +34,7 @@ class InventoryActivity : AppCompatActivity() {
         setContentView(R.layout.activity_inventory)
 
         tireRepository = TireRepository(this)
+        syncManager = SyncManager(this, tireRepository, BuildConfig.SYNC_TOKEN)
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         toolbar.setNavigationOnClickListener { finish() }
@@ -60,6 +66,14 @@ class InventoryActivity : AppCompatActivity() {
                 imm.hideSoftInputFromWindow(searchBar.windowToken, 0)
                 true
             } else false
+        }
+    }
+
+    private fun syncToWeb() {
+        lifecycleScope.launch {
+            syncManager.syncToWeb { result ->
+                Log.d("InventoryActivity", "Web sync: $result")
+            }
         }
     }
 
@@ -95,6 +109,8 @@ class InventoryActivity : AppCompatActivity() {
             .setPositiveButton("Remove All") { _, _ ->
                 tireRepository.deleteTire(tire.id)
                 loadInventory()
+                Log.d("InventorySync", "Calling syncToWeb after remove")
+                syncToWeb()
             }
             .setNegativeButton("Adjust Quantity") { _, _ ->
                 showAdjustQuantityDialog(tire)
@@ -120,6 +136,7 @@ class InventoryActivity : AppCompatActivity() {
                         tireRepository.updateQuantity(tire.id, newQty)
                     }
                     loadInventory()
+                    syncToWeb()
                 } else {
                     Toast.makeText(this, "Enter a valid quantity", Toast.LENGTH_SHORT).show()
                 }
