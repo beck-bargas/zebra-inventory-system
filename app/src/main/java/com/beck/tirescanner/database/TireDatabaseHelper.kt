@@ -29,6 +29,7 @@ data class TireEntry(
 
             val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
             cleaned = cleaned.replace(sizeRegex, "")
+            cleaned = cleaned?.replace(Regex(",.*$"), "")
 
             val junkWords = listOf(
                 "(?<!Cooper )\\bTire\\b", "\\bTires\\b", "\\bBSW\\b", "\\bWSW\\b",

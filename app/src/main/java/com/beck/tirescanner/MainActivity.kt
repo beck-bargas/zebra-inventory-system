@@ -363,7 +363,7 @@ class MainActivity : AppCompatActivity() {
             brandInput.setText(parsedName)
 
             val size = product.size.orEmpty()
-            val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?([A-Z]{1,2})?\s*([C-F])?""", RegexOption.IGNORE_CASE)
+            val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3})?([A-Z]{1,2})?\s*([C-F])?""", RegexOption.IGNORE_CASE)
             val match = sizeRegex.find(size)
             if (match != null) {
                 val typeStr = match.groupValues[1]
@@ -381,10 +381,16 @@ class MainActivity : AppCompatActivity() {
                 val constructionIndex = constructions.indexOfFirst { it.equals(construction, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
                 tireConstructionSpinner.setSelection(constructionIndex)
                 tireDiameterInput.setText(diameter)
+                var speedRatingVal = speedRating
+                var loadRangeVal = loadRange
+                if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-F]", RegexOption.IGNORE_CASE)) && loadIndex.isEmpty()) {
+                    loadRangeVal = speedRatingVal.uppercase()
+                    speedRatingVal = ""
+                }
                 tireLoadIndexInput.setText(loadIndex)
-                val speedIndex = speedRatings.indexOfFirst { it.equals(speedRating, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
+                val speedIndex = speedRatings.indexOfFirst { it.equals(speedRatingVal, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
                 tireSpeedRatingSpinner.setSelection(speedIndex)
-                val loadRangeIndex = loadRanges.indexOfFirst { it.equals(loadRange, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
+                val loadRangeIndex = loadRanges.indexOfFirst { it.equals(loadRangeVal, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
                 plyRatingSpinner.setSelection(loadRangeIndex)
             }
         }

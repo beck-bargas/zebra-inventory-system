@@ -20,11 +20,13 @@ data class BarcodeLookupProduct(
 ) {
     fun toProduct(): Product {
         val resolvedBrand = brand?.takeIf { it.isNotEmpty() } ?: manufacturer
+        val baseSizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
         val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
 
-        val titleMatch = if (!title.isNullOrEmpty()) sizeRegex.find(title) else null
-        val sizeMatch = if (!cleanedSize.isNullOrEmpty()) sizeRegex.find(cleanedSize) else null
+        val deduplicatedTitle = deduplicateSizes(title, baseSizeRegex)
+        val titleMatch = if (!deduplicatedTitle.isNullOrEmpty()) sizeRegex.findAll(deduplicatedTitle).maxByOrNull { it.value.length } else null
+        val sizeMatch = if (!cleanedSize.isNullOrEmpty()) sizeRegex.findAll(cleanedSize).maxByOrNull { it.value.length } else null
 
         val titleValue = titleMatch?.value?.let { normalizeSize(it) }
         val sizeValue = sizeMatch?.value?.let { normalizeSize(it) }
@@ -36,11 +38,31 @@ data class BarcodeLookupProduct(
             else -> null
         }
 
-        val finalSize = if (resolvedSize != null && !resolvedSize.startsWith("LT", ignoreCase = true) &&
+        var finalSize = if (resolvedSize != null && !resolvedSize.startsWith("LT", ignoreCase = true) &&
             title?.contains("light truck", ignoreCase = true) == true) {
             "LT$resolvedSize"
         } else resolvedSize
+
+        val loadRange = detectLoadRange(title)
+        if (loadRange != null && finalSize != null && !finalSize.contains(Regex("[C-F]$"))) {
+            finalSize = "$finalSize $loadRange"
+        }
+
         return Product(title = title, brand = resolvedBrand, size = finalSize, images = images, barcode = barcode, mpn = mpn)
+    }
+
+
+    private fun deduplicateSizes(title: String?, baseRegex: Regex): String? {
+        if (title.isNullOrEmpty()) return title
+        val matches = baseRegex.findAll(title).toList()
+        if (matches.size <= 1) return title
+        val prefixed = matches.firstOrNull { it.value.first().isLetter() }
+        val toRemove = if (prefixed != null) matches.filter { it != prefixed } else matches.drop(1)
+        var result = title
+        for (m in toRemove.sortedByDescending { it.range.first }) {
+            result = result?.removeRange(m.range)
+        }
+        return result?.replace(Regex("\\s+"), " ")?.trim()
     }
 
     private fun normalizeSize(raw: String): String {
@@ -48,6 +70,21 @@ data class BarcodeLookupProduct(
             .replace(Regex("""\s*/\s*"""), "/")
             .replace(Regex("""([RDB])\s*(\d)"""), "$1$2")
             .trim()
+    }
+
+    private fun detectLoadRange(title: String?): String? {
+        if (title.isNullOrEmpty()) return null
+        val plyToLoadRange = mapOf(2 to "A", 4 to "B", 6 to "C", 8 to "D", 10 to "E", 12 to "F")
+        val plyMatch = Regex("""\b(\d{1,2})PR\b""", RegexOption.IGNORE_CASE).find(title)
+        if (plyMatch != null) {
+            val ply = plyMatch.groupValues[1].toIntOrNull()
+            return plyToLoadRange[ply]
+        }
+        val loadRangeMatch = Regex("""\bLoad\s+Range\s+([A-F])\b""", RegexOption.IGNORE_CASE).find(title)
+        if (loadRangeMatch != null) return loadRangeMatch.groupValues[1].uppercase()
+        val standaloneMatch = Regex("""\b([C-F])\b""", RegexOption.IGNORE_CASE).find(title)
+        if (standaloneMatch != null) return standaloneMatch.groupValues[1].uppercase()
+        return null
     }
 }
 
@@ -70,11 +107,13 @@ data class UpcItem(
     val offers: List<Offer>? = null
 ) {
     fun toProduct(): Product {
+        val baseSizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
         val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?[A-Z]{1,2})?(?:\s*[C-F])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
 
-        val titleMatch = if (!title.isNullOrEmpty()) sizeRegex.find(title) else null
-        val sizeMatch = if (!cleanedSize.isNullOrEmpty()) sizeRegex.find(cleanedSize) else null
+        val deduplicatedTitle = deduplicateSizes(title, baseSizeRegex)
+        val titleMatch = if (!deduplicatedTitle.isNullOrEmpty()) sizeRegex.findAll(deduplicatedTitle).maxByOrNull { it.value.length } else null
+        val sizeMatch = if (!cleanedSize.isNullOrEmpty()) sizeRegex.findAll(cleanedSize).maxByOrNull { it.value.length } else null
 
         val titleValue = titleMatch?.value?.let { normalizeSize(it) }
         val sizeValue = sizeMatch?.value?.let { normalizeSize(it) }
@@ -87,11 +126,30 @@ data class UpcItem(
             else -> null
         }
 
-        val finalSize = if (resolvedSize != null && !resolvedSize.startsWith("LT", ignoreCase = true) &&
+        var finalSize = if (resolvedSize != null && !resolvedSize.startsWith("LT", ignoreCase = true) &&
             title?.contains("light truck", ignoreCase = true) == true) {
             "LT$resolvedSize"
         } else resolvedSize
+
+        val loadRange = detectLoadRange(title)
+        if (loadRange != null && finalSize != null && !finalSize.contains(Regex("[C-F]$"))) {
+            finalSize = "$finalSize $loadRange"
+        }
+
         return Product(title = title, brand = brand, size = finalSize, images = images, barcode = upc ?: ean)
+    }
+
+
+    private fun deduplicateSizes(title: String?, baseRegex: Regex): String? {
+        if (title.isNullOrEmpty()) return title
+        val matches = baseRegex.findAll(title).toList()
+        if (matches.size <= 1) return title
+        val prefixed = matches.firstOrNull { it.value.first().isLetter() }
+        val toRemove = if (prefixed != null) matches.filter { it != prefixed } else matches.drop(1)
+        var result = title
+        for (m in toRemove.sortedByDescending { it.range.first }) {
+            result = result?.removeRange(m.range) ?: result        }
+        return result?.replace(Regex("\\s+"), " ")?.trim()
     }
 
     private fun normalizeSize(raw: String): String {
@@ -99,6 +157,21 @@ data class UpcItem(
             .replace(Regex("""\s*/\s*"""), "/")
             .replace(Regex("""([RDB])\s*(\d)"""), "$1$2")
             .trim()
+    }
+
+    private fun detectLoadRange(title: String?): String? {
+        if (title.isNullOrEmpty()) return null
+        val plyToLoadRange = mapOf(2 to "A", 4 to "B", 6 to "C", 8 to "D", 10 to "E", 12 to "F")
+        val plyMatch = Regex("""\b(\d{1,2})PR\b""", RegexOption.IGNORE_CASE).find(title)
+        if (plyMatch != null) {
+            val ply = plyMatch.groupValues[1].toIntOrNull()
+            return plyToLoadRange[ply]
+        }
+        val loadRangeMatch = Regex("""\bLoad\s+Range\s+([A-F])\b""", RegexOption.IGNORE_CASE).find(title)
+        if (loadRangeMatch != null) return loadRangeMatch.groupValues[1].uppercase()
+        val standaloneMatch = Regex("""\b([C-F])\b""", RegexOption.IGNORE_CASE).find(title)
+        if (standaloneMatch != null) return standaloneMatch.groupValues[1].uppercase()
+        return null
     }
 }
 
