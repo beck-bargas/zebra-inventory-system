@@ -35,7 +35,6 @@ class HomeActivity : AppCompatActivity() {
         tireRepository = TireRepository(this)
         tireRepository.backfillSkus()
         syncManager = SyncManager(this, tireRepository, BuildConfig.SYNC_TOKEN)
-        syncManager.startServer()
 
         totalTiresText = findViewById(R.id.totalTiresText)
         uniqueTypesText = findViewById(R.id.uniqueTypesText)
@@ -64,20 +63,6 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateInventoryStats()
-        autoSync()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        syncManager.stopServer()
-    }
-
-    private fun autoSync() {
-        lifecycleScope.launch {
-            syncManager.discoverAndSync {
-                updateInventoryStats()
-            }
-        }
     }
 
     private fun updateInventoryStats() {

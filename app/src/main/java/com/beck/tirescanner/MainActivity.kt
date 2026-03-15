@@ -35,8 +35,6 @@ class MainActivity : AppCompatActivity() {
     private var isDialogShowing = false
 
     companion object {
-        private const val DATAWEDGE_INTENT_ACTION = "com.beck.tirescanner.SCAN"
-        private const val DATAWEDGE_INTENT_CATEGORY = "android.intent.category.DEFAULT"
         private const val DEFAULT_BARCODE_IMAGE = "https://images.barcodelookup.com/17601/176010350-1.jpg"
     }
 
