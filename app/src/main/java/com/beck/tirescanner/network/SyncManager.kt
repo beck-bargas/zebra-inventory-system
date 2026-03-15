@@ -201,7 +201,7 @@ class SyncManager(
                 val tires = tireRepository.getAllTires()
                 val json = gson.toJson(tires)
 
-                val url = URL("http://inventory.nixsauto.com/api.php?action=sync")
+                val url = URL("http://inventory.nixsauto.com/api/sync")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.doOutput = true
