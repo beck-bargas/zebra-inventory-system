@@ -59,7 +59,6 @@ class MainActivity : AppCompatActivity() {
         clearButton = findViewById(R.id.clearButton)
         clearButton.setOnClickListener { clearDisplay() }
 
-        configureDataWedge()
         handleIntent(intent)
     }
 
@@ -89,76 +88,6 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         try { unregisterReceiver(localBarcodeReceiver) } catch (_: IllegalArgumentException) {}
-    }
-
-    private fun configureDataWedge() {
-        val deleteIntent = Intent()
-        deleteIntent.action = "com.symbol.datawedge.api.ACTION"
-        deleteIntent.putExtra("com.symbol.datawedge.api.DELETE_PROFILE", arrayOf("BarcodeScannerProfile"))
-        sendBroadcast(deleteIntent)
-
-        Thread.sleep(200)
-
-        val createIntent = Intent()
-        createIntent.action = "com.symbol.datawedge.api.ACTION"
-        createIntent.putExtra("com.symbol.datawedge.api.CREATE_PROFILE", "BarcodeScannerProfile")
-        sendBroadcast(createIntent)
-
-        val intentBundle = Bundle()
-        intentBundle.putString("PROFILE_NAME", "BarcodeScannerProfile")
-        intentBundle.putString("PROFILE_ENABLED", "true")
-        intentBundle.putString("CONFIG_MODE", "UPDATE")
-
-        val appConfig = Bundle()
-        appConfig.putString("PACKAGE_NAME", packageName)
-        appConfig.putStringArray("ACTIVITY_LIST", arrayOf("com.beck.tirescanner.MainActivity"))
-        intentBundle.putParcelableArray("APP_LIST", arrayOf(appConfig))
-
-        val intentConfig = Bundle()
-        intentConfig.putString("PLUGIN_NAME", "INTENT")
-        intentConfig.putString("RESET_CONFIG", "true")
-        val intentProps = Bundle()
-        intentProps.putString("intent_output_enabled", "true")
-        intentProps.putString("intent_action", DATAWEDGE_INTENT_ACTION)
-        intentProps.putString("intent_category", DATAWEDGE_INTENT_CATEGORY)
-        intentProps.putInt("intent_delivery", 0)
-        intentConfig.putBundle("PARAM_LIST", intentProps)
-        intentBundle.putBundle("PLUGIN_CONFIG", intentConfig)
-
-        val intentProfileIntent = Intent()
-        intentProfileIntent.action = "com.symbol.datawedge.api.ACTION"
-        intentProfileIntent.putExtra("com.symbol.datawedge.api.SET_CONFIG", intentBundle)
-        sendBroadcast(intentProfileIntent)
-
-        val barcodeBundle = Bundle()
-        barcodeBundle.putString("PROFILE_NAME", "BarcodeScannerProfile")
-        barcodeBundle.putString("PROFILE_ENABLED", "true")
-        barcodeBundle.putString("CONFIG_MODE", "UPDATE")
-
-        val barcodeConfig = Bundle()
-        barcodeConfig.putString("PLUGIN_NAME", "BARCODE")
-        barcodeConfig.putString("RESET_CONFIG", "true")
-        val barcodeParams = Bundle()
-        barcodeParams.putString("scanner_selection", "auto")
-        barcodeParams.putString("scanner_input_enabled", "true")
-        barcodeParams.putString("decoder_upca", "true")
-        barcodeParams.putString("decoder_upce", "true")
-        barcodeParams.putString("decoder_ean13", "true")
-        barcodeParams.putString("decoder_ean8", "true")
-        barcodeParams.putString("decoder_code128", "true")
-        barcodeParams.putString("decoder_code39", "true")
-        barcodeParams.putString("decoder_qrcode", "false")
-        barcodeParams.putString("decoder_datamatrix", "false")
-        barcodeParams.putString("decoder_pdf417", "false")
-        barcodeParams.putString("decoder_aztec", "false")
-        barcodeParams.putString("decoder_maxicode", "false")
-        barcodeConfig.putBundle("PARAM_LIST", barcodeParams)
-        barcodeBundle.putBundle("PLUGIN_CONFIG", barcodeConfig)
-
-        val barcodeProfileIntent = Intent()
-        barcodeProfileIntent.action = "com.symbol.datawedge.api.ACTION"
-        barcodeProfileIntent.putExtra("com.symbol.datawedge.api.SET_CONFIG", barcodeBundle)
-        sendBroadcast(barcodeProfileIntent)
     }
 
     private fun handleBarcodeScanned(barcode: String) {
@@ -363,7 +292,7 @@ class MainActivity : AppCompatActivity() {
             brandInput.setText(parsedName)
 
             val size = product.size.orEmpty()
-            val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3})?([A-Z]{1,2})?\s*([C-F])?""", RegexOption.IGNORE_CASE)
+            val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?([A-Z]{1,2})?\s*([C-F])?""", RegexOption.IGNORE_CASE)
             val match = sizeRegex.find(size)
             if (match != null) {
                 val typeStr = match.groupValues[1]
