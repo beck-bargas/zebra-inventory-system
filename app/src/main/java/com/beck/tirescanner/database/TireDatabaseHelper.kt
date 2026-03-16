@@ -27,7 +27,7 @@ data class TireEntry(
                 cleaned = cleaned.replace(Regex("\\b${Regex.escape(mpn)}\\b", RegexOption.IGNORE_CASE), "")
             }
 
-            val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
+            val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
             cleaned = cleaned.replace(sizeRegex, "")
             cleaned = cleaned?.replace(Regex(",.*$"), "")
 
@@ -36,7 +36,8 @@ data class TireEntry(
                 "\\bOWL\\b", "\\bRWL\\b", "\\bXL\\b", "\\bSL\\b",
                 "\\bHigh[- ]Performance\\b", "\\b\\d{2,3}[A-Z]{1,2}\\b",
                 "\\bAll[- ]Terrain\\b", "\\bCommercial\\b", "\\bLight Truck\\b",
-                "\\b\\d{2,3}\\s+[A-Z]\\b", "\\b[C-G]\\b",)
+                "\\b\\d{2,3}\\s+[A-Z]\\b", "\\b[C-G]\\b", "\\b\\d{2,3}/\\d{2,3}[A-Z]{1,2}\\b",
+                "\\bLR[C-G]\\b", "\\bBlack Wall\\b", "\\bBW\\b", "\\b\\d{2,3}/\\d{2,3}\\s*[A-Z]{1,2}\\b",)
             for (junk in junkWords) {
                 cleaned = cleaned?.replace(Regex(junk, RegexOption.IGNORE_CASE), "")
             }
