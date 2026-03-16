@@ -37,7 +37,8 @@ data class TireEntry(
                 "\\bHigh[- ]Performance\\b", "\\b\\d{2,3}[A-Z]{1,2}\\b",
                 "\\bAll[- ]Terrain\\b", "\\bCommercial\\b", "\\bLight Truck\\b",
                 "\\b\\d{2,3}\\s+[A-Z]\\b", "\\b[C-G]\\b", "\\b\\d{2,3}/\\d{2,3}[A-Z]{1,2}\\b",
-                "\\bLR[C-G]\\b", "\\bBlack Wall\\b", "\\bBW\\b", "\\b\\d{2,3}/\\d{2,3}\\s*[A-Z]{1,2}\\b",)
+                "\\bLR[C-G]\\b", "\\bBlack Wall\\b", "\\bBW\\b", "\\b\\d{2,3}/\\d{2,3}\\s*[A-Z]{1,2}\\b",
+                "\\bAll[- ]Season\\b",)
             for (junk in junkWords) {
                 cleaned = cleaned?.replace(Regex(junk, RegexOption.IGNORE_CASE), "")
             }
