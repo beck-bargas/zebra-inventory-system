@@ -19,7 +19,9 @@ data class BarcodeLookupProduct(
     val mpn: String? = null
 ) {
     fun toProduct(): Product {
-        val resolvedBrand = brand?.takeIf { it.isNotEmpty() } ?: manufacturer
+        val resolvedBrand = brand?.takeIf { it.isNotEmpty() }
+            ?: manufacturer?.takeIf { it.isNotEmpty() }
+            ?: title?.trim()?.split(Regex("\\s+"))?.firstOrNull()
         val baseSizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}""", RegexOption.IGNORE_CASE)
         val sizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?|\d{2}R\d{2}(?:\.\d)?""", RegexOption.IGNORE_CASE)
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
