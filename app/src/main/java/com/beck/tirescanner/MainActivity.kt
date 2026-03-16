@@ -214,7 +214,10 @@ class MainActivity : AppCompatActivity() {
 
             val imageUrl = product.images?.firstOrNull()
             if (imageUrl != null) {
-                Glide.with(this@MainActivity).load(imageUrl).into(imageView)
+                Glide.with(this@MainActivity)
+                    .load(imageUrl)
+                    .error(R.drawable.placeholder)
+                    .into(imageView)
             } else {
                 imageView.setImageResource(R.drawable.placeholder)
             }
