@@ -18,7 +18,7 @@ android {
         val properties = Properties()
         properties.load(project.rootProject.file("local.properties").inputStream())
 
-        buildConfigField("String", "BARCODE_API_KEY", "\"${properties.getProperty("BARCODE_API_KEY")}\"")
+        buildConfigField("String", "RAINFOREST_API_KEY", "\"${properties.getProperty("RAINFOREST_API_KEY")}\"")
         buildConfigField("String", "SYNC_TOKEN", "\"${properties.getProperty("SYNC_TOKEN")}\"")
     }
 

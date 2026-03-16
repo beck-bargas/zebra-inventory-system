@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
 
         tireRepository = TireRepository(this)
         syncManager = SyncManager(this, tireRepository, BuildConfig.SYNC_TOKEN)
+        RetrofitClient.RAINFOREST_API_KEY = BuildConfig.RAINFOREST_API_KEY
         barcodeText = findViewById(R.id.barcodeText)
         responseText = findViewById(R.id.responseText)
         clearButton = findViewById(R.id.clearButton)
@@ -137,11 +138,11 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val existingTireInDb = tireRepository.getTireByBarcode(barcode)
-                var product = tryGetProduct(barcode, existingTireInDb, paid = true)
+                var product = tryGetProductFromRainforest(barcode)
 
                 if (product == null || !product.hasBrandAndSize()) {
-                    Log.d("BarcodeScanner", "Paid API had no/incomplete result, trying free tier...")
-                    val freeProduct = tryGetProduct(barcode, existingTireInDb, paid = false)
+                    Log.d("BarcodeScanner", "Rainforest had no/incomplete result, trying free tier...")
+                    val freeProduct = tryGetProductFromUpc(barcode, existingTireInDb)
                     if (freeProduct != null && freeProduct.hasBrandAndSize()) {
                         product = freeProduct
                     }
@@ -185,19 +186,63 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun tryGetProduct(barcode: String, existingTireInDb: TireEntry?, paid: Boolean): Product? {
+    private suspend fun tryGetProductFromRainforest(barcode: String): Product? {
         return try {
-            val products = if (paid) {
-                RetrofitClient.apiService.getProductInfo(barcode, RetrofitClient.API_KEY).toProducts()
-            } else {
-                RetrofitClient.upcApiService.getProductInfo(barcode).toProducts()
-            }
+            val response = RetrofitClient.rainforestApiService.getProductByGtin(
+                apiKey = RetrofitClient.RAINFOREST_API_KEY,
+                type = "product",
+                gtin = barcode,
+                amazonDomain = "amazon.com"
+            )
+            if (response.requestInfo?.success == true && response.product != null) {
+                val p = response.product
+                val imageUrl = p.mainImage?.link ?: p.images?.firstOrNull()?.link
+
+                val specSize = p.specifications
+                    ?.firstOrNull { it.name?.trim()?.equals("Size", ignoreCase = true) == true }
+                    ?.value?.replace("\u200E", "")?.trim()
+
+                val resolvedSize = specSize ?: run {
+                    val sizeRegex = Regex(
+                        """(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\.\d)?""",
+                        RegexOption.IGNORE_CASE
+                    )
+                    sizeRegex.find(p.title ?: "")?.value
+                }
+
+                val descriptionName = p.description?.let { desc ->
+                    val match = Regex("""^The\s+(.+?)\s+is\b""", RegexOption.IGNORE_CASE).find(desc.trim())
+                    match?.groupValues?.get(1)?.trim()
+                }
+
+                Log.d("APIResult", "Rainforest brand=${p.brand} size=$resolvedSize title=${p.title} descName=$descriptionName")
+
+                Product(
+                    title = descriptionName ?: p.title,  // prefer description name for cleaner parsing
+                    brand = p.brand,
+                    size = resolvedSize,
+                    images = imageUrl?.let { listOf(it) },
+                    barcode = barcode
+                )
+            } else null
+        } catch (e: Exception) {
+            Log.e("APIResult", "Rainforest exception: ${e.message}", e)
+            null
+        }
+    }
+    private suspend fun tryGetProductFromUpc(barcode: String, existingTireInDb: TireEntry?): Product? {
+        return try {
+            val products = RetrofitClient.upcApiService.getProductInfo(barcode).toProducts()
             if (products.isNotEmpty()) {
+                Log.d("APIResult", "UPC brand=${products[0].brand} size=${products[0].size} title=${products[0].title}")
                 products[0]
-            } else if (existingTireInDb != null && paid) {
+            } else if (existingTireInDb != null) {
                 Product(title = "", brand = existingTireInDb.brand, size = existingTireInDb.size, images = null, barcode = barcode)
             } else null
-        } catch (_: Exception) { null }
+        } catch (e: Exception) {
+            Log.e("APIResult", "UPC exception: ${e.message}", e)
+            null
+        }
     }
 
     private fun showConfirmationDialog(product: Product, barcode: String) {
@@ -332,8 +377,27 @@ class MainActivity : AppCompatActivity() {
         val constructions = arrayOf("R", "D", "B")
         tireConstructionSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, constructions)
 
-        val loadRanges = arrayOf("None", "C (6PR)", "D (8PR)", "E (10PR)", "F (12PR)", "G (14PR)")
+        val loadRanges = arrayOf("None", "C", "D", "E", "F", "G")
         plyRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, loadRanges)
+
+        tireDiameterInput.filters = arrayOf(object : android.text.InputFilter {
+            override fun filter(source: CharSequence, start: Int, end: Int, dest: android.text.Spanned, dstart: Int, dend: Int): CharSequence? {
+                val result = dest.toString().substring(0, dstart) + source.subSequence(start, end) + dest.toString().substring(dend)
+                if (source == ".") {
+                    if (dest.toString().contains('.')) return ""
+                    if (dstart < 2) return ""
+                    return null
+                }
+                if (source.any { !it.isDigit() }) return ""
+                if (result.contains('.')) {
+                    val afterDecimal = result.substringAfter('.')
+                    if (afterDecimal.length > 2) return ""
+                } else {
+                    if (result.length > 2) return ""
+                }
+                return null
+            }
+        })
 
         if (product != null) {
             val parsedName = TireEntry.extractNameFromTitle(product.title, product.mpn)
@@ -344,7 +408,6 @@ class MainActivity : AppCompatActivity() {
             val size = product.size.orEmpty()
             val sizeRegex = Regex("""(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?\s*([A-Z]{1,2})?\s*([C-G])?""", RegexOption.IGNORE_CASE)
             val match = sizeRegex.find(size)
-            Log.d("TireSize", "size to parse: '${product.size}'")
             if (match != null) {
                 val typeStr = match.groupValues[1]
                 val width = match.groupValues[2]
@@ -371,6 +434,21 @@ class MainActivity : AppCompatActivity() {
                 tireSpeedRatingInput.setText(speedRatingVal.uppercase())
                 val loadRangeIndex = loadRanges.indexOfFirst { it.equals(loadRangeVal, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
                 plyRatingSpinner.setSelection(loadRangeIndex)
+            } else {
+                val commercialRegex = Regex("""(\d{2,3})(R)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?\s*([A-Z])?\s*([C-G])?""", RegexOption.IGNORE_CASE)
+                val cm = commercialRegex.find(size)
+                if (cm != null) {
+                    tireWidthInput.setText(cm.groupValues[1])
+                    tireConstructionSpinner.setSelection(0)
+                    tireDiameterInput.setText(cm.groupValues[3])
+                    val loadIndex = cm.groupValues[4]
+                    val speedRating = cm.groupValues[5]
+                    val loadRange = cm.groupValues[6]
+                    tireLoadIndexInput.setText(loadIndex)
+                    tireSpeedRatingInput.setText(speedRating.uppercase())
+                    val loadRangeIndex = loadRanges.indexOfFirst { it.equals(loadRange, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
+                    plyRatingSpinner.setSelection(loadRangeIndex)
+                }
             }
         }
 
@@ -395,7 +473,11 @@ class MainActivity : AppCompatActivity() {
 
             val fullSize = buildString {
                 if (prefix != "None") append("$prefix ")
-                append("$width/$ratio$construction$diameter")
+                if (ratio.isNotEmpty()) {
+                    append("$width/$ratio$construction$diameter")
+                } else {
+                    append("$width$construction$diameter")
+                }
                 if (loadIndex.isNotEmpty()) append(" $loadIndex")
                 if (speedRating.isNotEmpty()) append(speedRating)
                 if (loadRange != "None") append(" $loadRange")

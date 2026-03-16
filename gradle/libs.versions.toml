@@ -7,7 +7,7 @@ kotlinxCoroutinesAndroid = "1.10.2"
 material = "1.13.0"
 constraintlayout = "2.2.1"
 nanohttpd = "2.3.1"
-retrofit = "3.0.0"
+retrofit = "2.9.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
