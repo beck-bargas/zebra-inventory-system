@@ -51,7 +51,6 @@ data class BarcodeLookupProduct(
         return Product(title = title, brand = resolvedBrand, size = finalSize, images = images, barcode = barcode, mpn = mpn)
     }
 
-
     private fun deduplicateSizes(title: String?, baseRegex: Regex): String? {
         if (title.isNullOrEmpty()) return title
         val matches = baseRegex.findAll(title).toList()
@@ -75,12 +74,14 @@ data class BarcodeLookupProduct(
     private fun detectLoadRange(title: String?): String? {
         if (title.isNullOrEmpty()) return null
         val plyToLoadRange = mapOf(2 to "A", 4 to "B", 6 to "C", 8 to "D", 10 to "E", 12 to "F")
+        val lrMatch = Regex("""\bLR([C-G])\b""", RegexOption.IGNORE_CASE).find(title)
+        if (lrMatch != null) return lrMatch.groupValues[1].uppercase()
         val plyMatch = Regex("""\b(\d{1,2})PR\b""", RegexOption.IGNORE_CASE).find(title)
         if (plyMatch != null) {
             val ply = plyMatch.groupValues[1].toIntOrNull()
             return plyToLoadRange[ply]
         }
-        val loadRangeMatch = Regex("""\bLoad\s+Range\s+([A-F])\b""", RegexOption.IGNORE_CASE).find(title)
+        val loadRangeMatch = Regex("""\bLoad\s+Range\s+([C-G])\b""", RegexOption.IGNORE_CASE).find(title)
         if (loadRangeMatch != null) return loadRangeMatch.groupValues[1].uppercase()
         val standaloneMatch = Regex("""\b([C-G])\b""", RegexOption.IGNORE_CASE)
             .findAll(title)
@@ -141,7 +142,6 @@ data class UpcItem(
         return Product(title = title, brand = brand, size = finalSize, images = images, barcode = upc ?: ean)
     }
 
-
     private fun deduplicateSizes(title: String?, baseRegex: Regex): String? {
         if (title.isNullOrEmpty()) return title
         val matches = baseRegex.findAll(title).toList()
@@ -165,6 +165,8 @@ data class UpcItem(
     private fun detectLoadRange(title: String?): String? {
         if (title.isNullOrEmpty()) return null
         val plyToLoadRange = mapOf(2 to "A", 4 to "B", 6 to "C", 8 to "D", 10 to "E", 12 to "F")
+        val lrMatch = Regex("""\bLR([C-G])\b""", RegexOption.IGNORE_CASE).find(title)
+        if (lrMatch != null) return lrMatch.groupValues[1].uppercase()
         val plyMatch = Regex("""\b(\d{1,2})PR\b""", RegexOption.IGNORE_CASE).find(title)
         if (plyMatch != null) {
             val ply = plyMatch.groupValues[1].toIntOrNull()
@@ -172,7 +174,9 @@ data class UpcItem(
         }
         val loadRangeMatch = Regex("""\bLoad\s+Range\s+([C-G])\b""", RegexOption.IGNORE_CASE).find(title)
         if (loadRangeMatch != null) return loadRangeMatch.groupValues[1].uppercase()
-        val standaloneMatch = Regex("""\b([C-G])\b""", RegexOption.IGNORE_CASE).find(title)
+        val standaloneMatch = Regex("""\b([C-G])\b""", RegexOption.IGNORE_CASE)
+            .findAll(title)
+            .lastOrNull { it.groupValues[1].uppercase() in listOf("C","D","E","F","G") }
         if (standaloneMatch != null) return standaloneMatch.groupValues[1].uppercase()
         return null
     }
