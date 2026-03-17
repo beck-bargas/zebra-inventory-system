@@ -117,7 +117,11 @@ class TireRepository(context: Context) {
 
     fun insertTire(product: Product, barcode: String, quantity: Int): Long {
         val db = dbHelper.writableDatabase
-        val existingSku = getTireByBarcode(barcode)?.sku ?: TireEntry.generateSku()
+        val existingSku = getTireByBarcode(barcode)?.sku
+            ?: product.mpn?.takeIf { it.isNotEmpty() }?.let { mpn ->
+                (mpn.take(5).padEnd(5, '0') + "0").uppercase()
+            }
+            ?: TireEntry.generateSku()
         val name = TireEntry.extractNameFromTitle(product.title, product.mpn)
             ?: product.brand
             ?: ""
