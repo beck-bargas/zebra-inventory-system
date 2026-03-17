@@ -346,7 +346,6 @@ class MainActivity : AppCompatActivity() {
         fun applyMode(isCommercial: Boolean) {
             rowPrefix.visibility = if (isCommercial) android.view.View.GONE else android.view.View.VISIBLE
             rowRatio.visibility = if (isCommercial) android.view.View.GONE else android.view.View.VISIBLE
-
         }
 
         var metricValues = mapOf<String, String>()
@@ -410,7 +409,6 @@ class MainActivity : AppCompatActivity() {
 
         val size = product?.size.orEmpty()
 
-        // Auto-detect commercial
         val isCommercial = size.isNotEmpty() &&
                 Regex("""^\d{2,3}R\d{2}""", RegexOption.IGNORE_CASE).containsMatchIn(size) &&
                 !Regex("""^\d{3}/""").containsMatchIn(size)

@@ -5,7 +5,15 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
 
-    var RAINFOREST_API_KEY: String = ""
+    var API_KEY: String = ""
+
+    val apiService: TireApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.barcodelookup.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TireApiService::class.java)
+    }
 
     val upcApiService: UpcApiService by lazy {
         Retrofit.Builder()
@@ -13,13 +21,5 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(UpcApiService::class.java)
-    }
-
-    val rainforestApiService: RainforestApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl("https://api.rainforestapi.com/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(RainforestApiService::class.java)
     }
 }

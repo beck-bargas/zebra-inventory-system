@@ -30,7 +30,7 @@ class HomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        RetrofitClient.RAINFOREST_API_KEY = BuildConfig.RAINFOREST_API_KEY
+        RetrofitClient.API_KEY = BuildConfig.BARCODE_API_KEY
 
         tireRepository = TireRepository(this)
         tireRepository.backfillSkus()
