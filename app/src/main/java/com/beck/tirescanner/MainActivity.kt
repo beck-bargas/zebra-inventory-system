@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -21,6 +22,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.beck.tirescanner.database.TireEntry
 import com.beck.tirescanner.database.TireRepository
 import com.beck.tirescanner.models.Product
@@ -33,8 +36,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tireRepository: TireRepository
     private lateinit var syncManager: SyncManager
     private lateinit var barcodeText: TextView
-    private lateinit var responseText: TextView
     private lateinit var clearButton: Button
+    private lateinit var historyRecyclerView: RecyclerView
+    private lateinit var emptyHistoryText: TextView
+    private lateinit var historyCountText: TextView
+    private lateinit var scanHistoryAdapter: ScanHistoryAdapter
     private var isDialogShowing = false
 
     companion object {
@@ -56,9 +62,25 @@ class MainActivity : AppCompatActivity() {
 
         tireRepository = TireRepository(this)
         syncManager = SyncManager(this, tireRepository, BuildConfig.SYNC_TOKEN)
+
         barcodeText = findViewById(R.id.barcodeText)
-        responseText = findViewById(R.id.responseText)
         clearButton = findViewById(R.id.clearButton)
+        historyRecyclerView = findViewById(R.id.historyRecyclerView)
+        emptyHistoryText = findViewById(R.id.emptyHistoryText)
+        historyCountText = findViewById(R.id.historyCountText)
+
+        scanHistoryAdapter = ScanHistoryAdapter()
+        historyRecyclerView.layoutManager = LinearLayoutManager(this)
+        historyRecyclerView.adapter = scanHistoryAdapter
+
+        // Restore history that survived activity recreation
+        if (scanHistoryAdapter.getCount() > 0) {
+            emptyHistoryText.visibility = View.GONE
+            historyRecyclerView.visibility = View.VISIBLE
+            historyCountText.text = "${scanHistoryAdapter.getCount()} scan${if (scanHistoryAdapter.getCount() == 1) "" else "s"}"
+            scanHistoryAdapter.notifyDataSetChanged()
+        }
+
         clearButton.setOnClickListener { clearDisplay() }
 
         handleIntent(intent)
@@ -177,13 +199,14 @@ class MainActivity : AppCompatActivity() {
                     }
                 } else {
                     runOnUiThread {
-                        responseText.text = "No product found for barcode: $barcode"
                         Toast.makeText(this@MainActivity, "Could not detect brand and size", Toast.LENGTH_SHORT).show()
                         showManualEntryDialog(barcode, null)
                     }
                 }
             } catch (e: Exception) {
-                runOnUiThread { responseText.text = "Error: ${e.message}" }
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -254,13 +277,13 @@ class MainActivity : AppCompatActivity() {
     private fun handleOutMode(product: Product, barcode: String) {
         val existingTire = tireRepository.getTireByDetails(barcode, product.brand, product.size)
         if (existingTire != null) {
-            askQuantityToRemove(existingTire)
+            askQuantityToRemove(existingTire, product)
         } else {
             Toast.makeText(this, "Tire not found in inventory", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun askQuantityToRemove(existingTire: TireEntry) {
+    private fun askQuantityToRemove(existingTire: TireEntry, product: Product) {
         val dialogView = layoutInflater.inflate(R.layout.tire_amount, null)
         val input = dialogView.findViewById<EditText>(R.id.etAmount)
         val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
@@ -299,8 +322,12 @@ class MainActivity : AppCompatActivity() {
                     val success = tireRepository.decreaseQuantity(existingTire.id, amountToRemove)
                     if (success) {
                         val newTotal = existingTire.quantity - amountToRemove
+                        val label = buildTireLabel(product)
+                        addScanHistoryEntry("OUT", amountToRemove, label)
+
                         if (newTotal == 0) Toast.makeText(this, "Removed all tires. Entry deleted.", Toast.LENGTH_LONG).show()
                         else Toast.makeText(this, "Removed $amountToRemove tires. Remaining: $newTotal", Toast.LENGTH_LONG).show()
+
                         lifecycleScope.launch {
                             syncManager.syncToWeb { result ->
                                 Log.d("MainActivity", "Web sync: $result")
@@ -344,8 +371,8 @@ class MainActivity : AppCompatActivity() {
         plyRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, loadRanges)
 
         fun applyMode(isCommercial: Boolean) {
-            rowPrefix.visibility = if (isCommercial) android.view.View.GONE else android.view.View.VISIBLE
-            rowRatio.visibility = if (isCommercial) android.view.View.GONE else android.view.View.VISIBLE
+            rowPrefix.visibility = if (isCommercial) View.GONE else View.VISIBLE
+            rowRatio.visibility = if (isCommercial) View.GONE else View.VISIBLE
         }
 
         var metricValues = mapOf<String, String>()
@@ -423,7 +450,7 @@ class MainActivity : AppCompatActivity() {
 
         if (product != null) {
             val parsedName = TireEntry.extractNameFromTitle(product.title, product.mpn)
-                ?: tireRepository.getTireByBarcode(barcode)?.name
+                ?: tireRepository.getTireByBarcode(product.barcode ?: "")?.name
                 ?: product.brand.orEmpty()
             brandInput.setText(parsedName)
 
@@ -581,11 +608,15 @@ class MainActivity : AppCompatActivity() {
             val success = tireRepository.increaseQuantity(existingTire.id, quantity)
             if (success) {
                 val newTotal = existingTire.quantity + quantity
+                val label = buildTireLabel(product)
+                addScanHistoryEntry("IN", quantity, label)
                 Toast.makeText(this, "Added $quantity tires. Total: $newTotal", Toast.LENGTH_LONG).show()
             }
         } else {
             val id = tireRepository.insertTire(product, barcode, quantity)
             if (id > 0) {
+                val label = buildTireLabel(product)
+                addScanHistoryEntry("IN", quantity, label)
                 Toast.makeText(this, "Added $quantity new tires", Toast.LENGTH_LONG).show()
             } else {
                 Toast.makeText(this, "Error saving tire", Toast.LENGTH_SHORT).show()
@@ -600,8 +631,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── History helpers ──────────────────────────────────────────────────────
+
+    private fun buildTireLabel(product: Product): String {
+        val name = TireEntry.extractNameFromTitle(product.title, product.mpn)
+            ?: product.title?.takeIf { it.isNotEmpty() }
+            ?: product.brand
+            ?: "Unknown Tire"
+        val size = product.size?.takeIf { it.isNotEmpty() }
+        return if (size != null) "$size $name" else name
+    }
+
+    private fun addScanHistoryEntry(mode: String, quantity: Int, tireLabel: String) {
+        runOnUiThread {
+            scanHistoryAdapter.addEntry(
+                ScanEntry(mode = mode, quantity = quantity, tireDescription = tireLabel)
+            )
+            emptyHistoryText.visibility = View.GONE
+            historyRecyclerView.visibility = View.VISIBLE
+            historyCountText.text = "${scanHistoryAdapter.getCount()} scan${if (scanHistoryAdapter.getCount() == 1) "" else "s"}"
+        }
+    }
+
     private fun clearDisplay() {
         barcodeText.text = "No barcode scanned"
-        responseText.text = "Waiting for scan..."
+        scanHistoryAdapter.clear()
+        emptyHistoryText.visibility = View.VISIBLE
+        historyRecyclerView.visibility = View.GONE
+        historyCountText.text = "0 scans"
     }
 }

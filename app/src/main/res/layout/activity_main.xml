@@ -7,19 +7,30 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="228dp"
+        android:layout_height="121dp"
+        android:layout_marginTop="12dp"
+        android:contentDescription="Nix's Auto &amp; Tire Service Logo"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/logo" />
+
     <TextView
         android:id="@+id/titleText"
         android:layout_width="wrap_content"
         android:layout_height="40dp"
-        android:layout_marginTop="152dp"
         android:text="Barcode Scanner"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/imageView2" />
 
+    <!-- Last Scanned Barcode Card -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/barcodeCard"
         android:layout_width="0dp"
@@ -56,8 +67,9 @@
 
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- Scan History Card -->
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/responseCard"
+        android:id="@+id/historyCard"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
@@ -69,35 +81,69 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/barcodeCard">
 
-        <ScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
+            <!-- Header row -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="8dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="API Response"
+                    android:layout_weight="1"
+                    android:text="Scan History"
                     android:textColor="#999999"
                     android:textSize="14sp" />
 
                 <TextView
-                    android:id="@+id/responseText"
-                    android:layout_width="match_parent"
+                    android:id="@+id/historyCountText"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Waiting for scan..."
-                    android:textIsSelectable="true"
-                    android:textSize="16sp" />
+                    android:text="0 scans"
+                    android:textColor="#999999"
+                    android:textSize="12sp" />
 
             </LinearLayout>
 
-        </ScrollView>
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#EEEEEE" />
+
+            <!-- Empty state -->
+            <TextView
+                android:id="@+id/emptyHistoryText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="32dp"
+                android:text="No scans yet"
+                android:textColor="#BBBBBB"
+                android:textSize="14sp"
+                android:visibility="visible" />
+
+            <!-- History list -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/historyRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:visibility="gone"
+                tools:listitem="@layout/item_scan_history" />
+
+        </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>
 
@@ -107,22 +153,10 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:backgroundTint="@color/blue"
-        android:text="Clear"
+        android:text="Clear History"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <ImageView
-        android:id="@+id/imageView2"
-        android:layout_width="228dp"
-        android:layout_height="121dp"
-        android:layout_marginTop="12dp"
-        android:contentDescription="Nix's Auto &amp; Tire Service Logo"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/logo" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
