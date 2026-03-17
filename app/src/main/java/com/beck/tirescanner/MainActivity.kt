@@ -349,14 +349,63 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-        // Radio toggle
+        var metricValues = mapOf<String, String>()
+        var commercialValues = mapOf<String, String>()
+
+        fun saveMetric() {
+            metricValues = mapOf(
+                "prefix" to tirePrefixSpinner.selectedItemPosition.toString(),
+                "width" to tireWidthInput.text.toString(),
+                "ratio" to tireRatioInput.text.toString(),
+                "construction" to tireConstructionSpinner.selectedItemPosition.toString(),
+                "diameter" to tireDiameterInput.text.toString(),
+                "loadIndex" to tireLoadIndexInput.text.toString(),
+                "speedRating" to tireSpeedRatingInput.text.toString(),
+                "loadRange" to plyRatingSpinner.selectedItemPosition.toString()
+            )
+        }
+
+        fun saveCommercial() {
+            commercialValues = mapOf(
+                "width" to tireWidthInput.text.toString(),
+                "construction" to tireConstructionSpinner.selectedItemPosition.toString(),
+                "diameter" to tireDiameterInput.text.toString(),
+                "loadIndex" to tireLoadIndexInput.text.toString(),
+                "speedRating" to tireSpeedRatingInput.text.toString(),
+                "loadRange" to plyRatingSpinner.selectedItemPosition.toString()
+            )
+        }
+
+        fun restoreMetric() {
+            tirePrefixSpinner.setSelection(metricValues["prefix"]?.toIntOrNull() ?: 0)
+            tireWidthInput.setText(metricValues["width"] ?: "")
+            tireRatioInput.setText(metricValues["ratio"] ?: "")
+            tireConstructionSpinner.setSelection(metricValues["construction"]?.toIntOrNull() ?: 0)
+            tireDiameterInput.setText(metricValues["diameter"] ?: "")
+            tireLoadIndexInput.setText(metricValues["loadIndex"] ?: "")
+            tireSpeedRatingInput.setText(metricValues["speedRating"] ?: "")
+            plyRatingSpinner.setSelection(metricValues["loadRange"]?.toIntOrNull() ?: 0)
+        }
+
+        fun restoreCommercial() {
+            tireWidthInput.setText(commercialValues["width"] ?: "")
+            tireConstructionSpinner.setSelection(commercialValues["construction"]?.toIntOrNull() ?: 0)
+            tireDiameterInput.setText(commercialValues["diameter"] ?: "")
+            tireLoadIndexInput.setText(commercialValues["loadIndex"] ?: "")
+            tireSpeedRatingInput.setText(commercialValues["speedRating"] ?: "")
+            plyRatingSpinner.setSelection(commercialValues["loadRange"]?.toIntOrNull() ?: 0)
+        }
+
         tireModeGroup.setOnCheckedChangeListener { _, checkedId ->
-            applyMode(checkedId == R.id.radioCommercial)
-            tireWidthInput.text?.clear()
-            tireRatioInput.text?.clear()
-            tireDiameterInput.text?.clear()
-            tireLoadIndexInput.text?.clear()
-            tireSpeedRatingInput.text?.clear()
+            if (checkedId == R.id.radioCommercial) {
+                saveMetric()
+                applyMode(true)
+                restoreCommercial()
+            } else {
+                saveCommercial()
+                applyMode(false)
+                restoreMetric()
+            }
         }
 
         val size = product?.size.orEmpty()
