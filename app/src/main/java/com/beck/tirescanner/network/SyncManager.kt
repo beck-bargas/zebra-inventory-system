@@ -72,4 +72,45 @@ class SyncManager(
             }
         }
     }
+
+    suspend fun postScanHistory(
+        syncId: String?,
+        barcode: String?,
+        name: String?,
+        brand: String?,
+        size: String?,
+        action: String,
+        quantity: Int
+    ) {
+        withContext(Dispatchers.IO) {
+            try {
+                val json = org.json.JSONObject().apply {
+                    put("syncId", syncId ?: "")
+                    put("barcode", barcode ?: "")
+                    put("name", name ?: "")
+                    put("brand", brand ?: "")
+                    put("size", size ?: "")
+                    put("action", action)
+                    put("quantity", quantity)
+                }.toString()
+
+                val url = URL("http://inventory.nixsauto.com/api/history")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.doOutput = true
+                conn.setRequestProperty("Content-Type", "application/json")
+                conn.setRequestProperty("x-sync-token", syncToken)
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
+                val writer = OutputStreamWriter(conn.outputStream)
+                writer.write(json)
+                writer.flush()
+                writer.close()
+                conn.responseCode
+                conn.disconnect()
+            } catch (e: Exception) {
+                Log.e("SyncManager", "History post error: ${e.message}")
+            }
+        }
+    }
 }
