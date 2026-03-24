@@ -329,6 +329,15 @@ class MainActivity : AppCompatActivity() {
                         else Toast.makeText(this, "Removed $amountToRemove tires. Remaining: $newTotal", Toast.LENGTH_LONG).show()
 
                         lifecycleScope.launch {
+                            syncManager.postScanHistory(
+                                syncId = existingTire.syncId,
+                                barcode = existingTire.barcode,
+                                name = existingTire.name,
+                                brand = existingTire.brand,
+                                size = existingTire.size,
+                                action = "OUT",
+                                quantity = amountToRemove
+                            )
                             syncManager.syncToWeb { result ->
                                 Log.d("MainActivity", "Web sync: $result")
                             }
@@ -625,6 +634,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
+            syncManager.postScanHistory(
+                syncId = tireRepository.getTireByDetails(barcode, product.brand, product.size)?.syncId,
+                barcode = barcode,
+                name = TireEntry.extractNameFromTitle(product.title, product.mpn) ?: product.brand,
+                brand = product.brand,
+                size = product.size,
+                action = "IN",
+                quantity = quantity
+            )
             syncManager.syncToWeb { result ->
                 Log.d("MainActivity", "Web sync: $result")
             }
