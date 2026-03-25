@@ -39,7 +39,6 @@
             android:layout_marginBottom="12dp"
             android:background="#E0E0E0" />
 
-        <!-- Format label -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -48,30 +47,39 @@
             android:textColor="#666666"
             android:layout_marginBottom="4dp" />
 
-        <!-- Radio buttons -->
         <RadioGroup
             android:id="@+id/tireModeGroup"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="16dp">
 
             <RadioButton
                 android:id="@+id/radioMetric"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Metric"
+                android:layout_weight="1"
                 android:checked="true"
-                android:layout_marginEnd="16dp" />
+                android:text="Metric"
+                android:textSize="12sp" />
 
             <RadioButton
                 android:id="@+id/radioCommercial"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Commercial" />
+                android:layout_weight="1"
+                android:text="Truck"
+                android:textSize="12sp" />
+
+            <RadioButton
+                android:id="@+id/radioAtv"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Bias"
+                android:textSize="12sp" />
 
         </RadioGroup>
-
         <!-- Metric-only: Type prefix -->
         <LinearLayout
             android:id="@+id/rowPrefix"
@@ -80,45 +88,27 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:text="Type"
-                android:textSize="13sp"
-                android:textColor="#666666" />
-
-            <Spinner
-                android:id="@+id/tirePrefixSpinner"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                android:text="Type" android:textSize="13sp" android:textColor="#666666" />
+            <Spinner android:id="@+id/tirePrefixSpinner"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:minWidth="80dp" />
-
         </LinearLayout>
 
+        <!-- Metric/Commercial: Width -->
         <LinearLayout
+            android:id="@+id/rowWidth"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:text="Width"
-                android:textSize="13sp"
-                android:textColor="#666666" />
-
-            <EditText
-                android:id="@+id/tireWidthInput"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:hint="Empty"
-                android:inputType="number"
-                android:maxLength="3"
+            <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                android:text="Width" android:textSize="13sp" android:textColor="#666666" />
+            <EditText android:id="@+id/tireWidthInput"
+                android:layout_width="80dp" android:layout_height="wrap_content"
+                android:hint="Empty" android:inputType="number" android:maxLength="3"
                 android:textSize="16sp" />
-
         </LinearLayout>
 
         <!-- Metric-only: Aspect Ratio -->
@@ -129,144 +119,133 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:text="Aspect Ratio"
-                android:textSize="13sp"
-                android:textColor="#666666" />
-
-            <EditText
-                android:id="@+id/tireRatioInput"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:hint="Empty"
-                android:inputType="number"
-                android:maxLength="2"
+            <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                android:text="Aspect Ratio" android:textSize="13sp" android:textColor="#666666" />
+            <EditText android:id="@+id/tireRatioInput"
+                android:layout_width="80dp" android:layout_height="wrap_content"
+                android:hint="Empty" android:inputType="number" android:maxLength="2"
                 android:textSize="16sp" />
-
         </LinearLayout>
 
+        <!-- Metric/Commercial: Construction -->
         <LinearLayout
+            android:id="@+id/rowConstruction"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:text="Construction"
-                android:textSize="13sp"
-                android:textColor="#666666" />
-
-            <Spinner
-                android:id="@+id/tireConstructionSpinner"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                android:text="Construction" android:textSize="13sp" android:textColor="#666666" />
+            <Spinner android:id="@+id/tireConstructionSpinner"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:minWidth="80dp" />
-
         </LinearLayout>
 
+        <!-- Metric/Commercial: Wheel Diameter -->
         <LinearLayout
+            android:id="@+id/rowDiameter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:text="Wheel Diameter"
-                android:textSize="13sp"
-                android:textColor="#666666" />
-
-            <EditText
-                android:id="@+id/tireDiameterInput"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:hint="Empty"
-                android:inputType="numberDecimal"
-                android:maxLength="4"
+            <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                android:text="Wheel Diameter" android:textSize="13sp" android:textColor="#666666" />
+            <EditText android:id="@+id/tireDiameterInput"
+                android:layout_width="80dp" android:layout_height="wrap_content"
+                android:hint="Empty" android:inputType="numberDecimal" android:maxLength="4"
                 android:textSize="16sp" />
-
         </LinearLayout>
 
+        <!-- Metric/Commercial: Load Index -->
         <LinearLayout
+            android:id="@+id/rowLoadIndex"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:text="Load Index"
-                android:textSize="13sp"
-                android:textColor="#666666" />
-
-            <EditText
-                android:id="@+id/tireLoadIndexInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Empty"
-                android:inputType="text"
-                android:maxLength="10"
+            <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                android:text="Load Index" android:textSize="13sp" android:textColor="#666666" />
+            <EditText android:id="@+id/tireLoadIndexInput"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:hint="Empty" android:inputType="text" android:maxLength="10"
                 android:textSize="16sp" />
-
         </LinearLayout>
 
+        <!-- Metric/Commercial: Speed Rating -->
         <LinearLayout
+            android:id="@+id/rowSpeedRating"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:text="Speed Rating"
-                android:textSize="13sp"
-                android:textColor="#666666" />
-
-            <EditText
-                android:id="@+id/tireSpeedRatingInput"
-                android:layout_width="80dp"
-                android:layout_height="wrap_content"
-                android:hint="Empty"
-                android:inputType="textCapCharacters"
-                android:maxLength="2"
+            <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                android:text="Speed Rating" android:textSize="13sp" android:textColor="#666666" />
+            <EditText android:id="@+id/tireSpeedRatingInput"
+                android:layout_width="80dp" android:layout_height="wrap_content"
+                android:hint="Empty" android:inputType="textCapCharacters" android:maxLength="2"
                 android:textSize="16sp" />
-
         </LinearLayout>
 
+        <!-- Shared: Load Range / Ply Rating (shown in all modes) -->
         <LinearLayout
+            android:id="@+id/rowLoadRange"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="12dp">
-
             <TextView
-                android:layout_width="100dp"
-                android:layout_height="wrap_content"
-                android:text="Load Range"
-                android:textSize="13sp"
-                android:textColor="#666666" />
-
-            <Spinner
-                android:id="@+id/plyRatingSpinner"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:id="@+id/labelLoadRange"
+                android:layout_width="100dp" android:layout_height="wrap_content"
+                android:text="Load Range" android:textSize="13sp" android:textColor="#666666" />
+            <Spinner android:id="@+id/plyRatingSpinner"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:minWidth="80dp" />
+        </LinearLayout>
+
+        <!-- Bias-only: Overall x Width - Rim -->
+        <LinearLayout
+            android:id="@+id/rowAtvOverall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone">
+
+            <TextView android:layout_width="100dp" android:layout_height="wrap_content"
+                android:text="Overall" android:textSize="13sp" android:textColor="#666666" />
+
+            <EditText android:id="@+id/atvOverallInput"
+                android:layout_width="50dp" android:layout_height="wrap_content"
+                android:hint="27" android:inputType="number" android:maxLength="3"
+                android:textSize="16sp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="x" android:textSize="16sp" android:textColor="#666666"
+                android:layout_marginHorizontal="4dp" />
+
+            <EditText android:id="@+id/atvWidthInput"
+                android:layout_width="50dp" android:layout_height="wrap_content"
+                android:hint="9" android:inputType="numberDecimal" android:maxLength="4"
+                android:textSize="16sp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="-" android:textSize="16sp" android:textColor="#666666"
+                android:layout_marginHorizontal="4dp" />
+
+            <EditText android:id="@+id/atvRimInput"
+                android:layout_width="50dp" android:layout_height="wrap_content"
+                android:hint="12" android:inputType="number" android:maxLength="2"
+                android:textSize="16sp" />
 
         </LinearLayout>
 
+        <!-- Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -281,10 +260,7 @@
                 android:layout_height="wrap_content"
                 android:text="Cancel" />
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
 
             <Button
                 android:id="@+id/confirmButton"

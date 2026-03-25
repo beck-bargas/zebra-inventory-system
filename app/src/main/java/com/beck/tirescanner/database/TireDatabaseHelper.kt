@@ -28,8 +28,9 @@ data class TireEntry(
             }
 
             val sizeRegex = Regex(
-                """(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?|\d{1,3}R\d{2}(?:\.\d)?""",
-                RegexOption.IGNORE_CASE)
+                """(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?|\d{1,3}R\d{2}(?:\.\d)?|\d{2,3}[xX]\d{1,2}(?:\.\d+)?-\d{2}""",
+                RegexOption.IGNORE_CASE
+            )
             cleaned = cleaned.replace(sizeRegex, "")
             cleaned = cleaned?.replace(Regex(",.*$"), "")
 

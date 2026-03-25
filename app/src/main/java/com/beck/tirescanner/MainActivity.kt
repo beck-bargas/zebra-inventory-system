@@ -73,7 +73,6 @@ class MainActivity : AppCompatActivity() {
         historyRecyclerView.layoutManager = LinearLayoutManager(this)
         historyRecyclerView.adapter = scanHistoryAdapter
 
-        // Restore history that survived activity recreation
         if (scanHistoryAdapter.getCount() > 0) {
             emptyHistoryText.visibility = View.GONE
             historyRecyclerView.visibility = View.VISIBLE
@@ -82,7 +81,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         clearButton.setOnClickListener { clearDisplay() }
-
         handleIntent(intent)
     }
 
@@ -324,10 +322,8 @@ class MainActivity : AppCompatActivity() {
                         val newTotal = existingTire.quantity - amountToRemove
                         val label = buildTireLabel(product)
                         addScanHistoryEntry("OUT", amountToRemove, label)
-
                         if (newTotal == 0) Toast.makeText(this, "Removed all tires. Entry deleted.", Toast.LENGTH_LONG).show()
                         else Toast.makeText(this, "Removed $amountToRemove tires. Remaining: $newTotal", Toast.LENGTH_LONG).show()
-
                         lifecycleScope.launch {
                             syncManager.postScanHistory(
                                 syncId = existingTire.syncId,
@@ -357,8 +353,19 @@ class MainActivity : AppCompatActivity() {
         val tireModeGroup = dialogView.findViewById<RadioGroup>(R.id.tireModeGroup)
         val radioMetric = dialogView.findViewById<RadioButton>(R.id.radioMetric)
         val radioCommercial = dialogView.findViewById<RadioButton>(R.id.radioCommercial)
+        val radioAtv = dialogView.findViewById<RadioButton>(R.id.radioAtv)
+
         val rowPrefix = dialogView.findViewById<LinearLayout>(R.id.rowPrefix)
+        val rowWidth = dialogView.findViewById<LinearLayout>(R.id.rowWidth)
         val rowRatio = dialogView.findViewById<LinearLayout>(R.id.rowRatio)
+        val rowConstruction = dialogView.findViewById<LinearLayout>(R.id.rowConstruction)
+        val rowDiameter = dialogView.findViewById<LinearLayout>(R.id.rowDiameter)
+        val rowLoadIndex = dialogView.findViewById<LinearLayout>(R.id.rowLoadIndex)
+        val rowSpeedRating = dialogView.findViewById<LinearLayout>(R.id.rowSpeedRating)
+        val rowLoadRange = dialogView.findViewById<LinearLayout>(R.id.rowLoadRange)
+        val rowAtvOverall = dialogView.findViewById<LinearLayout>(R.id.rowAtvOverall)
+        val labelLoadRange = dialogView.findViewById<TextView>(R.id.labelLoadRange)
+
         val tirePrefixSpinner = dialogView.findViewById<Spinner>(R.id.tirePrefixSpinner)
         val tireWidthInput = dialogView.findViewById<EditText>(R.id.tireWidthInput)
         val tireRatioInput = dialogView.findViewById<EditText>(R.id.tireRatioInput)
@@ -367,6 +374,9 @@ class MainActivity : AppCompatActivity() {
         val tireLoadIndexInput = dialogView.findViewById<EditText>(R.id.tireLoadIndexInput)
         val tireSpeedRatingInput = dialogView.findViewById<EditText>(R.id.tireSpeedRatingInput)
         val plyRatingSpinner = dialogView.findViewById<Spinner>(R.id.plyRatingSpinner)
+        val atvOverallInput = dialogView.findViewById<EditText>(R.id.atvOverallInput)
+        val atvWidthInput = dialogView.findViewById<EditText>(R.id.atvWidthInput)
+        val atvRimInput = dialogView.findViewById<EditText>(R.id.atvRimInput)
         val cancelButton = dialogView.findViewById<Button>(R.id.cancelButton)
         val confirmButton = dialogView.findViewById<Button>(R.id.confirmButton)
 
@@ -379,9 +389,19 @@ class MainActivity : AppCompatActivity() {
         val loadRanges = arrayOf("None", "C (6PR)", "D (8PR)", "E (10PR)", "F (12PR)", "G (14PR)")
         plyRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, loadRanges)
 
-        fun applyMode(isCommercial: Boolean) {
-            rowPrefix.visibility = if (isCommercial) View.GONE else View.VISIBLE
-            rowRatio.visibility = if (isCommercial) View.GONE else View.VISIBLE
+        fun applyMode(mode: String) {
+            val isBias = mode == "bias"
+            val isMetric = mode == "metric"
+            rowPrefix.visibility = if (isMetric) View.VISIBLE else View.GONE
+            rowRatio.visibility = if (isMetric) View.VISIBLE else View.GONE
+            rowWidth.visibility = if (isBias) View.GONE else View.VISIBLE
+            rowConstruction.visibility = if (isBias) View.GONE else View.VISIBLE
+            rowDiameter.visibility = if (isBias) View.GONE else View.VISIBLE
+            rowLoadIndex.visibility = if (isBias) View.GONE else View.VISIBLE
+            rowSpeedRating.visibility = if (isBias) View.GONE else View.VISIBLE
+            rowAtvOverall.visibility = if (isBias) View.VISIBLE else View.GONE
+            rowLoadRange.visibility = View.VISIBLE
+            labelLoadRange.text = if (isBias) "Ply Rating" else "Load Range"
         }
 
         var metricValues = mapOf<String, String>()
@@ -432,29 +452,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         tireModeGroup.setOnCheckedChangeListener { _, checkedId ->
-            if (checkedId == R.id.radioCommercial) {
-                saveMetric()
-                applyMode(true)
-                restoreCommercial()
-            } else {
-                saveCommercial()
-                applyMode(false)
-                restoreMetric()
+            when (checkedId) {
+                R.id.radioCommercial -> { saveMetric(); applyMode("commercial"); restoreCommercial() }
+                R.id.radioAtv -> { saveMetric(); applyMode("bias") }
+                else -> { saveCommercial(); applyMode("metric"); restoreMetric() }
             }
         }
 
         val size = product?.size.orEmpty()
 
-        val isCommercial = size.isNotEmpty() &&
+        val isBias = Regex("""\d{2,3}[xX]\d{1,2}(?:\.\d+)?-\d{2}""").containsMatchIn(size)
+        val isCommercial = !isBias && size.isNotEmpty() &&
                 Regex("""^\d{2,3}R\d{2}""", RegexOption.IGNORE_CASE).containsMatchIn(size) &&
                 !Regex("""^\d{3}/""").containsMatchIn(size)
 
-        if (isCommercial) {
-            radioCommercial.isChecked = true
-            applyMode(true)
-        } else {
-            radioMetric.isChecked = true
-            applyMode(false)
+        when {
+            isBias -> { radioAtv.isChecked = true; applyMode("bias") }
+            isCommercial -> { radioCommercial.isChecked = true; applyMode("commercial") }
+            else -> { radioMetric.isChecked = true; applyMode("metric") }
         }
 
         if (product != null) {
@@ -465,107 +480,133 @@ class MainActivity : AppCompatActivity() {
 
             Log.d("TireSize", "size to parse: '$size'")
 
-            if (isCommercial) {
-                val commercialRegex = Regex(
-                    """^(P|LT|ST|C)?\s*(\d{2,3})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?([A-Z]{1,2})?\s*([C-G])?$""",
-                    RegexOption.IGNORE_CASE
-                )
-                val cm = commercialRegex.find(size.trim())
-                if (cm != null) {
-                    tireWidthInput.setText(cm.groupValues[2])
-                    val constructionIndex = constructions.indexOfFirst { it.equals(cm.groupValues[3], ignoreCase = true) }.takeIf { it >= 0 } ?: 0
-                    tireConstructionSpinner.setSelection(constructionIndex)
-                    tireDiameterInput.setText(cm.groupValues[4])
-                    tireLoadIndexInput.setText(cm.groupValues[5])
-                    var speedRatingVal = cm.groupValues[6]
-                    var loadRangeVal = cm.groupValues[7]
-                    if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-G]", RegexOption.IGNORE_CASE))) {
-                        loadRangeVal = speedRatingVal.uppercase()
-                        speedRatingVal = ""
+            when {
+                isBias -> {
+                    val m = Regex("""(\d{2,3})[xX](\d{1,2}(?:\.\d+)?)-(\d{2})""").find(size)
+                    if (m != null) {
+                        atvOverallInput.setText(m.groupValues[1])
+                        atvWidthInput.setText(m.groupValues[2].trimEnd('0').trimEnd('.'))
+                        atvRimInput.setText(m.groupValues[3])
                     }
-                    tireSpeedRatingInput.setText(speedRatingVal.uppercase())
-                    val loadRangeIndex = loadRanges.indexOfFirst { it.startsWith(loadRangeVal, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
-                    plyRatingSpinner.setSelection(loadRangeIndex)
+                    val plyMatch = Regex("""(\d+)\s*(?:[Pp]ly|PR)""").find(product.title ?: "")
+                    if (plyMatch != null) {
+                        val plyNum = plyMatch.groupValues[1].toIntOrNull()
+                        val idx = when (plyNum) { 6 -> 1; 8 -> 2; 10 -> 3; 12 -> 4; 14 -> 5; else -> 0 }
+                        plyRatingSpinner.setSelection(idx)
+                    }
                 }
-            } else {
-                val sizeRegex = Regex(
-                    """(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?\s*([A-Z]{1,2})?\s*([C-G])?""",
-                    RegexOption.IGNORE_CASE
-                )
-                val match = sizeRegex.find(size)
-                if (match != null) {
-                    val prefixIndex = prefixes.indexOfFirst { it.equals(match.groupValues[1], ignoreCase = true) }.takeIf { it >= 0 } ?: 0
-                    tirePrefixSpinner.setSelection(prefixIndex)
-                    tireWidthInput.setText(match.groupValues[2])
-                    tireRatioInput.setText(match.groupValues[3])
-                    val constructionIndex = constructions.indexOfFirst { it.equals(match.groupValues[4], ignoreCase = true) }.takeIf { it >= 0 } ?: 0
-                    tireConstructionSpinner.setSelection(constructionIndex)
-                    tireDiameterInput.setText(match.groupValues[5])
-                    var speedRatingVal = match.groupValues[7]
-                    var loadRangeVal = match.groupValues[8]
-                    if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-G]", RegexOption.IGNORE_CASE)) && match.groupValues[6].isEmpty()) {
-                        loadRangeVal = speedRatingVal.uppercase()
-                        speedRatingVal = ""
+                isCommercial -> {
+                    val cm = Regex(
+                        """^(P|LT|ST|C)?\s*(\d{2,3})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?([A-Z]{1,2})?\s*([C-G])?$""",
+                        RegexOption.IGNORE_CASE
+                    ).find(size.trim())
+                    if (cm != null) {
+                        tireWidthInput.setText(cm.groupValues[2])
+                        tireConstructionSpinner.setSelection(constructions.indexOfFirst { it.equals(cm.groupValues[3], ignoreCase = true) }.takeIf { it >= 0 } ?: 0)
+                        tireDiameterInput.setText(cm.groupValues[4])
+                        tireLoadIndexInput.setText(cm.groupValues[5])
+                        var speedRatingVal = cm.groupValues[6]
+                        var loadRangeVal = cm.groupValues[7]
+                        if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-G]", RegexOption.IGNORE_CASE))) {
+                            loadRangeVal = speedRatingVal.uppercase(); speedRatingVal = ""
+                        }
+                        tireSpeedRatingInput.setText(speedRatingVal.uppercase())
+                        plyRatingSpinner.setSelection(loadRanges.indexOfFirst { it.startsWith(loadRangeVal, ignoreCase = true) }.takeIf { it >= 0 } ?: 0)
                     }
-                    tireLoadIndexInput.setText(match.groupValues[6])
-                    tireSpeedRatingInput.setText(speedRatingVal.uppercase())
-                    val loadRangeIndex = loadRanges.indexOfFirst { it.startsWith(loadRangeVal, ignoreCase = true) }.takeIf { it >= 0 } ?: 0
-                    plyRatingSpinner.setSelection(loadRangeIndex)
+                }
+                else -> {
+                    val match = Regex(
+                        """(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?\s*([A-Z]{1,2})?\s*([C-G])?""",
+                        RegexOption.IGNORE_CASE
+                    ).find(size)
+                    if (match != null) {
+                        tirePrefixSpinner.setSelection(prefixes.indexOfFirst { it.equals(match.groupValues[1], ignoreCase = true) }.takeIf { it >= 0 } ?: 0)
+                        tireWidthInput.setText(match.groupValues[2])
+                        tireRatioInput.setText(match.groupValues[3])
+                        tireConstructionSpinner.setSelection(constructions.indexOfFirst { it.equals(match.groupValues[4], ignoreCase = true) }.takeIf { it >= 0 } ?: 0)
+                        tireDiameterInput.setText(match.groupValues[5])
+                        var speedRatingVal = match.groupValues[7]
+                        var loadRangeVal = match.groupValues[8]
+                        if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-G]", RegexOption.IGNORE_CASE)) && match.groupValues[6].isEmpty()) {
+                            loadRangeVal = speedRatingVal.uppercase(); speedRatingVal = ""
+                        }
+                        tireLoadIndexInput.setText(match.groupValues[6])
+                        tireSpeedRatingInput.setText(speedRatingVal.uppercase())
+                        plyRatingSpinner.setSelection(loadRanges.indexOfFirst { it.startsWith(loadRangeVal, ignoreCase = true) }.takeIf { it >= 0 } ?: 0)
+                    }
                 }
             }
         }
 
         val dialog = AlertDialog.Builder(this).setTitle("Enter Tire Information").setView(dialogView).create()
-
         setScannerEnabled(false)
         isDialogShowing = true
         dialog.setOnDismissListener { setScannerEnabled(true); isDialogShowing = false }
-
         cancelButton.setOnClickListener { dialog.dismiss() }
 
         confirmButton.setOnClickListener {
             val name = brandInput.text.toString()
-            val width = tireWidthInput.text.toString()
-            val diameter = tireDiameterInput.text.toString()
-            val construction = tireConstructionSpinner.selectedItem.toString()
-            val loadIndex = tireLoadIndexInput.text.toString()
-            val speedRating = tireSpeedRatingInput.text.toString().uppercase()
-            val loadRange = plyRatingSpinner.selectedItem.toString()
-            val loadRangeCode = if (loadRange != "None") loadRange.substringBefore(" ") else ""
 
-            val fullSize = if (radioCommercial.isChecked) {
-                buildString {
-                    append("$width$construction$diameter")
-                    if (loadIndex.isNotEmpty()) append(" $loadIndex")
-                    if (speedRating.isNotEmpty()) append(speedRating)
-                    if (loadRangeCode.isNotEmpty()) append(" $loadRangeCode")
+            val fullSize = when {
+                radioAtv.isChecked -> {
+                    val overall = atvOverallInput.text.toString()
+                    val w = atvWidthInput.text.toString()
+                    val rim = atvRimInput.text.toString()
+                    val loadRange = plyRatingSpinner.selectedItem.toString()
+                    val plyCode = if (loadRange != "None") " ${loadRange.substringBefore(" ")}PR" else ""
+                    if (overall.isNotEmpty() && w.isNotEmpty() && rim.isNotEmpty()) "${overall}x${w}-${rim}$plyCode" else ""
                 }
-            } else {
-                val prefix = tirePrefixSpinner.selectedItem.toString()
-                val ratio = tireRatioInput.text.toString()
-                buildString {
-                    if (prefix != "None") append("$prefix ")
-                    if (ratio.isNotEmpty()) append("$width/$ratio$construction$diameter")
-                    else append("$width$construction$diameter")
-                    if (loadIndex.isNotEmpty()) append(" $loadIndex")
-                    if (speedRating.isNotEmpty()) append(speedRating)
-                    if (loadRangeCode.isNotEmpty()) append(" $loadRangeCode")
+                radioCommercial.isChecked -> {
+                    val width = tireWidthInput.text.toString()
+                    val diameter = tireDiameterInput.text.toString()
+                    val construction = tireConstructionSpinner.selectedItem.toString()
+                    val loadIndex = tireLoadIndexInput.text.toString()
+                    val speedRating = tireSpeedRatingInput.text.toString().uppercase()
+                    val loadRange = plyRatingSpinner.selectedItem.toString()
+                    val loadRangeCode = if (loadRange != "None") loadRange.substringBefore(" ") else ""
+                    buildString {
+                        append("$width$construction$diameter")
+                        if (loadIndex.isNotEmpty()) append(" $loadIndex")
+                        if (speedRating.isNotEmpty()) append(speedRating)
+                        if (loadRangeCode.isNotEmpty()) append(" $loadRangeCode")
+                    }
+                }
+                else -> {
+                    val prefix = tirePrefixSpinner.selectedItem.toString()
+                    val width = tireWidthInput.text.toString()
+                    val ratio = tireRatioInput.text.toString()
+                    val diameter = tireDiameterInput.text.toString()
+                    val construction = tireConstructionSpinner.selectedItem.toString()
+                    val loadIndex = tireLoadIndexInput.text.toString()
+                    val speedRating = tireSpeedRatingInput.text.toString().uppercase()
+                    val loadRange = plyRatingSpinner.selectedItem.toString()
+                    val loadRangeCode = if (loadRange != "None") loadRange.substringBefore(" ") else ""
+                    buildString {
+                        if (prefix != "None") append("$prefix ")
+                        if (ratio.isNotEmpty()) append("$width/$ratio$construction$diameter")
+                        else append("$width$construction$diameter")
+                        if (loadIndex.isNotEmpty()) append(" $loadIndex")
+                        if (speedRating.isNotEmpty()) append(speedRating)
+                        if (loadRangeCode.isNotEmpty()) append(" $loadRangeCode")
+                    }
                 }
             }
 
-            if (name.isNotEmpty() && width.isNotEmpty() && diameter.isNotEmpty()) {
+            val valid = when {
+                radioAtv.isChecked -> name.isNotEmpty() && atvOverallInput.text.isNotEmpty() &&
+                        atvWidthInput.text.isNotEmpty() && atvRimInput.text.isNotEmpty()
+                else -> name.isNotEmpty() && tireWidthInput.text.isNotEmpty() && tireDiameterInput.text.isNotEmpty()
+            }
+
+            if (valid && fullSize.isNotEmpty()) {
                 val manualProduct = Product(
-                    title = name,
-                    brand = product?.brand ?: name,
-                    size = fullSize,
-                    images = product?.images,
-                    barcode = barcode,
-                    mpn = product?.mpn
+                    title = name, brand = product?.brand ?: name, size = fullSize,
+                    images = product?.images, barcode = barcode, mpn = product?.mpn
                 )
                 askAmount(manualProduct, barcode)
                 dialog.dismiss()
             } else {
-                Toast.makeText(this, "Please enter at least name, width, and diameter", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please enter at least name and size fields", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -648,8 +689,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    // ── History helpers ──────────────────────────────────────────────────────
 
     private fun buildTireLabel(product: Product): String {
         val name = TireEntry.extractNameFromTitle(product.title, product.mpn)

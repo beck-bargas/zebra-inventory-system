@@ -24,9 +24,13 @@ data class BarcodeLookupProduct(
         val resolvedBrand = brand?.takeIf { it.isNotEmpty() }
             ?: manufacturer?.takeIf { it.isNotEmpty() }
             ?: title?.trim()?.split(Regex("\\s+"))?.firstOrNull()
-        val baseSizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{1,3}R\d{2}""", RegexOption.IGNORE_CASE)
+        val baseSizeRegex = Regex(
+            """(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{1,3}R\d{2}|\d{2,3}[xX]\d{1,2}(?:\.\d+)?-\d{2}""",
+            RegexOption.IGNORE_CASE
+        )
         val sizeRegex = Regex(
-            """(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?|\d{1,3}R\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?""",
+            """(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?
+                |(?:\s*[C-G])?|\d{1,3}R\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?|\d{2,3}[xX]\d{1,2}(?:\.\d+)?-\d{2}""".trimMargin(),
             RegexOption.IGNORE_CASE
         )
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
@@ -119,9 +123,12 @@ data class UpcItem(
     val offers: List<Offer>? = null
 ) {
     fun toProduct(): Product {
-        val baseSizeRegex = Regex("""(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{1,3}R\d{2}""", RegexOption.IGNORE_CASE)
+        val baseSizeRegex = Regex(
+            """(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}|\d{1,3}R\d{2}|\d{2,3}[xX]\d{1,2}(?:\.\d+)?-\d{2}""",
+            RegexOption.IGNORE_CASE
+        )
         val sizeRegex = Regex(
-            """(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?|\d{1,3}R\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?""",
+            """(?:P|LT|ST|C)?\s*\d{3}\s*/\s*\d{2}\s*R\s*\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?|\d{1,3}R\d{2}(?:\.\d)?(?:\s*\d{2,3}(?:/\d{2,3})?\s*[A-Z]{1,2})?(?:\s*[C-G])?|\d{2,3}[xX]\d{1,2}(?:\.\d+)?-\d{2}""",
             RegexOption.IGNORE_CASE
         )
         val cleanedSize = size?.replace("[", "")?.replace("]", "")?.trim()
