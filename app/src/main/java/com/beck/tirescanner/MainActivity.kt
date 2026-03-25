@@ -386,7 +386,7 @@ class MainActivity : AppCompatActivity() {
         val constructions = arrayOf("R", "D", "B")
         tireConstructionSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, constructions)
 
-        val loadRanges = arrayOf("None", "C (6PR)", "D (8PR)", "E (10PR)", "F (12PR)", "G (14PR)")
+        val loadRanges = arrayOf("None", "C (6PR)", "D (8PR)", "E (10PR)", "F (12PR)", "G (14PR)", "H (16 PR)")
         plyRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, loadRanges)
 
         fun applyMode(mode: String) {
@@ -497,7 +497,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 isCommercial -> {
                     val cm = Regex(
-                        """^(P|LT|ST|C)?\s*(\d{2,3})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?([A-Z]{1,2})?\s*([C-G])?$""",
+                        """^(P|LT|ST|C)?\s*(\d{2,3})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?([A-Z]{1,2})?\s*([C-H])?$""",
                         RegexOption.IGNORE_CASE
                     ).find(size.trim())
                     if (cm != null) {
@@ -507,7 +507,7 @@ class MainActivity : AppCompatActivity() {
                         tireLoadIndexInput.setText(cm.groupValues[5])
                         var speedRatingVal = cm.groupValues[6]
                         var loadRangeVal = cm.groupValues[7]
-                        if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-G]", RegexOption.IGNORE_CASE))) {
+                        if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-H]", RegexOption.IGNORE_CASE))) {
                             loadRangeVal = speedRatingVal.uppercase(); speedRatingVal = ""
                         }
                         tireSpeedRatingInput.setText(speedRatingVal.uppercase())
@@ -516,7 +516,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 else -> {
                     val match = Regex(
-                        """(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?\s*([A-Z]{1,2})?\s*([C-G])?""",
+                        """(P|LT|ST|C)?\s*(\d{3})/(\d{2})(R|D|B)(\d{2}(?:\.\d)?)\s*(\d{2,3}(?:/\d{2,3})?)?\s*([A-Z]{1,2})?\s*([C-H])?""",
                         RegexOption.IGNORE_CASE
                     ).find(size)
                     if (match != null) {
@@ -527,7 +527,7 @@ class MainActivity : AppCompatActivity() {
                         tireDiameterInput.setText(match.groupValues[5])
                         var speedRatingVal = match.groupValues[7]
                         var loadRangeVal = match.groupValues[8]
-                        if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-G]", RegexOption.IGNORE_CASE)) && match.groupValues[6].isEmpty()) {
+                        if (loadRangeVal.isEmpty() && speedRatingVal.matches(Regex("[C-H]", RegexOption.IGNORE_CASE)) && match.groupValues[6].isEmpty()) {
                             loadRangeVal = speedRatingVal.uppercase(); speedRatingVal = ""
                         }
                         tireLoadIndexInput.setText(match.groupValues[6])
