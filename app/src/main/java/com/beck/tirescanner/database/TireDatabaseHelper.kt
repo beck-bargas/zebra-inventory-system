@@ -39,8 +39,9 @@ data class TireEntry(
                 "\\bOWL\\b", "\\bRWL\\b", "\\bXL\\b", "\\bSL\\b", "\\bHigh[- ]Performance\\b",
                 "\\bAll[- ]Terrain\\b", "\\bCommercial\\b", "\\bLight Truck\\b", "\\b[C-G]\\b", "\\bLR[C-G]\\b",
                 "\\bBlack Wall\\b", "\\bBW\\b", "\\bAll[- ]Season\\b", "\\bfor\\b.*$", "\\(\\d{5,}\\)", "\\b\\d{5,}\\b",
-                "\\(.*?(?:PLY|PR|G).*?\\)", "[A-Z]?/\\d+\\s*(?:PLY|PR)\\b", "\\b\\d{2,3}/\\d{2,3}\\s*[A-Z]{0,2}\\b",
-                "(?<![A-Za-z]-?)\\b\\d{2,3}\\s*[A-Z]{1,2}\\b", "(?<![A-Za-z]-?)\\b\\d{2,3}\\s+[A-Z]\\b", "\\b[B-G]\\b",
+                "\\(.*?(?:PLY|PR|G).*?\\)", "[A-Z]?/\\d+\\s*(?:PLY|PR)\\b", "\\b\\d{1,2}\\s*(?:PLY|Ply|ply)\\b", "\\b\\d{2,3}/\\d{2,3}\\s*[A-Z]{0,2}\\b",
+                "(?<![A-Za-z]-?)\\b\\d{2,3}\\s*[A-Z]{1,2}\\b", "(?<![A-Za-z]-?)\\b\\d{2,3}\\s+[A-Z]\\b", "\\b[B-H]\\b",
+                "\\bRadial\\b", "\\bDirectional\\b", "\\bRear\\b", "\\bFront\\b",
             )
             for (junk in junkWords) {
                 cleaned = cleaned?.replace(Regex(junk, RegexOption.IGNORE_CASE), "")
