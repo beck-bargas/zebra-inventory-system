@@ -356,6 +356,7 @@ class MainActivity : AppCompatActivity() {
         val radioAtv = dialogView.findViewById<RadioButton>(R.id.radioAtv)
 
         val rowPrefix = dialogView.findViewById<LinearLayout>(R.id.rowPrefix)
+        val rowMetricOverall = dialogView.findViewById<LinearLayout>(R.id.rowMetricOverall)
         val rowWidth = dialogView.findViewById<LinearLayout>(R.id.rowWidth)
         val rowRatio = dialogView.findViewById<LinearLayout>(R.id.rowRatio)
         val rowConstruction = dialogView.findViewById<LinearLayout>(R.id.rowConstruction)
@@ -367,6 +368,7 @@ class MainActivity : AppCompatActivity() {
         val labelLoadRange = dialogView.findViewById<TextView>(R.id.labelLoadRange)
 
         val tirePrefixSpinner = dialogView.findViewById<Spinner>(R.id.tirePrefixSpinner)
+        val metricOverallInput = dialogView.findViewById<EditText>(R.id.metricOverallInput)
         val tireWidthInput = dialogView.findViewById<EditText>(R.id.tireWidthInput)
         val tireRatioInput = dialogView.findViewById<EditText>(R.id.tireRatioInput)
         val tireConstructionSpinner = dialogView.findViewById<Spinner>(R.id.tireConstructionSpinner)
@@ -386,14 +388,15 @@ class MainActivity : AppCompatActivity() {
         val constructions = arrayOf("R", "D", "B")
         tireConstructionSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, constructions)
 
-        val loadRanges = arrayOf("None", "C (6PR)", "D (8PR)", "E (10PR)", "F (12PR)", "G (14PR)", "H (16 PR)")
+        val loadRanges = arrayOf("None", "C (6PR)", "D (8PR)", "E (10PR)", "F (12PR)", "G (14PR)", "H (16PR)")
         plyRatingSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, loadRanges)
 
-        fun applyMode(mode: String) {
+        fun applyMode(mode: String, showMetricOverall: Boolean = false) {
             val isBias = mode == "bias"
             val isMetric = mode == "metric"
             rowPrefix.visibility = if (isMetric) View.VISIBLE else View.GONE
-            rowRatio.visibility = if (isMetric) View.VISIBLE else View.GONE
+            rowMetricOverall.visibility = if (isMetric && showMetricOverall) View.VISIBLE else View.GONE
+            rowRatio.visibility = if (isMetric && !showMetricOverall) View.VISIBLE else View.GONE
             rowWidth.visibility = if (isBias) View.GONE else View.VISIBLE
             rowConstruction.visibility = if (isBias) View.GONE else View.VISIBLE
             rowDiameter.visibility = if (isBias) View.GONE else View.VISIBLE
@@ -410,6 +413,7 @@ class MainActivity : AppCompatActivity() {
         fun saveMetric() {
             metricValues = mapOf(
                 "prefix" to tirePrefixSpinner.selectedItemPosition.toString(),
+                "overall" to metricOverallInput.text.toString(),
                 "width" to tireWidthInput.text.toString(),
                 "ratio" to tireRatioInput.text.toString(),
                 "construction" to tireConstructionSpinner.selectedItemPosition.toString(),
@@ -433,6 +437,7 @@ class MainActivity : AppCompatActivity() {
 
         fun restoreMetric() {
             tirePrefixSpinner.setSelection(metricValues["prefix"]?.toIntOrNull() ?: 0)
+            metricOverallInput.setText(metricValues["overall"] ?: "")
             tireWidthInput.setText(metricValues["width"] ?: "")
             tireRatioInput.setText(metricValues["ratio"] ?: "")
             tireConstructionSpinner.setSelection(metricValues["construction"]?.toIntOrNull() ?: 0)
@@ -461,14 +466,18 @@ class MainActivity : AppCompatActivity() {
 
         val size = product?.size.orEmpty()
 
+        // Bias: 27x9-12 (dash format, narrow width)
         val isBias = Regex("""\d{2,3}[xX]\d{1,2}(?:\.\d+)?-\d{2}""").containsMatchIn(size)
-        val isCommercial = !isBias && size.isNotEmpty() &&
+        // X-metric: 37X12.50R20 (wide width with R, goes to Metric tab)
+        val isXMetric = !isBias && Regex("""\d{2,3}[xX]\d{2,3}(?:\.\d+)?R\d{2}""", RegexOption.IGNORE_CASE).containsMatchIn(size)
+        val isCommercial = !isBias && !isXMetric && size.isNotEmpty() &&
                 Regex("""^\d{2,3}R\d{2}""", RegexOption.IGNORE_CASE).containsMatchIn(size) &&
                 !Regex("""^\d{3}/""").containsMatchIn(size)
 
         when {
             isBias -> { radioAtv.isChecked = true; applyMode("bias") }
             isCommercial -> { radioCommercial.isChecked = true; applyMode("commercial") }
+            isXMetric -> { radioMetric.isChecked = true; applyMode("metric", showMetricOverall = true) }
             else -> { radioMetric.isChecked = true; applyMode("metric") }
         }
 
@@ -482,6 +491,7 @@ class MainActivity : AppCompatActivity() {
 
             when {
                 isBias -> {
+                    // 27x9-12
                     val m = Regex("""(\d{2,3})[xX](\d{1,2}(?:\.\d+)?)-(\d{2})""").find(size)
                     if (m != null) {
                         atvOverallInput.setText(m.groupValues[1])
@@ -491,7 +501,29 @@ class MainActivity : AppCompatActivity() {
                     val plyMatch = Regex("""(\d+)\s*(?:[Pp]ly|PR)""").find(product.title ?: "")
                     if (plyMatch != null) {
                         val plyNum = plyMatch.groupValues[1].toIntOrNull()
-                        val idx = when (plyNum) { 6 -> 1; 8 -> 2; 10 -> 3; 12 -> 4; 14 -> 5; else -> 0 }
+                        val idx = when (plyNum) { 6 -> 1; 8 -> 2; 10 -> 3; 12 -> 4; 14 -> 5; 16 -> 6; else -> 0 }
+                        plyRatingSpinner.setSelection(idx)
+                    }
+                }
+                isXMetric -> {
+                    // 37X12.50R20 — overall=37, width=12.50, rim=20, no ratio
+                    val m = Regex("""(\d{2,3})[xX](\d{2,3}(?:\.\d+)?)R(\d{2})""", RegexOption.IGNORE_CASE).find(size)
+                    if (m != null) {
+                        metricOverallInput.setText(m.groupValues[1])  // 37
+                        tireWidthInput.setText(m.groupValues[2])      // 12.50
+                        tireRatioInput.setText("")                     // no ratio
+                        tireConstructionSpinner.setSelection(0)        // R
+                        tireDiameterInput.setText(m.groupValues[3])   // 20
+                    }
+                    // Detect LT prefix from size string
+                    if (size.startsWith("LT", ignoreCase = true)) {
+                        tirePrefixSpinner.setSelection(prefixes.indexOfFirst { it.equals("LT", ignoreCase = true) }.takeIf { it >= 0 } ?: 0)
+                    }
+                    // Detect load range/ply
+                    val plyMatch = Regex("""(\d+)\s*(?:[Pp]ly|PR)""").find(product.title ?: "")
+                    if (plyMatch != null) {
+                        val plyNum = plyMatch.groupValues[1].toIntOrNull()
+                        val idx = when (plyNum) { 6 -> 1; 8 -> 2; 10 -> 3; 12 -> 4; 14 -> 5; 16 -> 6; else -> 0 }
                         plyRatingSpinner.setSelection(idx)
                     }
                 }
@@ -549,12 +581,15 @@ class MainActivity : AppCompatActivity() {
 
             val fullSize = when {
                 radioAtv.isChecked -> {
+                    // Bias: 27x9-12
                     val overall = atvOverallInput.text.toString()
                     val w = atvWidthInput.text.toString()
                     val rim = atvRimInput.text.toString()
                     val loadRange = plyRatingSpinner.selectedItem.toString()
                     val plyCode = if (loadRange != "None") " ${loadRange.substringBefore(" ")}PR" else ""
-                    if (overall.isNotEmpty() && w.isNotEmpty() && rim.isNotEmpty()) "${overall}x${w}-${rim}$plyCode" else ""
+                    if (overall.isNotEmpty() && w.isNotEmpty() && rim.isNotEmpty())
+                        "${overall}x${w}-${rim}$plyCode"
+                    else ""
                 }
                 radioCommercial.isChecked -> {
                     val width = tireWidthInput.text.toString()
@@ -572,7 +607,9 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 else -> {
+                    // Metric — check if overall is filled (X-metric format)
                     val prefix = tirePrefixSpinner.selectedItem.toString()
+                    val overall = metricOverallInput.text.toString()
                     val width = tireWidthInput.text.toString()
                     val ratio = tireRatioInput.text.toString()
                     val diameter = tireDiameterInput.text.toString()
@@ -581,13 +618,26 @@ class MainActivity : AppCompatActivity() {
                     val speedRating = tireSpeedRatingInput.text.toString().uppercase()
                     val loadRange = plyRatingSpinner.selectedItem.toString()
                     val loadRangeCode = if (loadRange != "None") loadRange.substringBefore(" ") else ""
-                    buildString {
-                        if (prefix != "None") append("$prefix ")
-                        if (ratio.isNotEmpty()) append("$width/$ratio$construction$diameter")
-                        else append("$width$construction$diameter")
-                        if (loadIndex.isNotEmpty()) append(" $loadIndex")
-                        if (speedRating.isNotEmpty()) append(speedRating)
-                        if (loadRangeCode.isNotEmpty()) append(" $loadRangeCode")
+
+                    if (overall.isNotEmpty()) {
+                        // X-metric format: LT37X12.50R20 or 37X12.50R20
+                        buildString {
+                            if (prefix != "None") append(prefix)
+                            append("${overall}X${width}${construction}${diameter}")
+                            if (loadIndex.isNotEmpty()) append(" $loadIndex")
+                            if (speedRating.isNotEmpty()) append(speedRating)
+                            if (loadRangeCode.isNotEmpty()) append(" $loadRangeCode")
+                        }
+                    } else {
+                        // Standard metric: 255/70R17
+                        buildString {
+                            if (prefix != "None") append("$prefix ")
+                            if (ratio.isNotEmpty()) append("$width/$ratio$construction$diameter")
+                            else append("$width$construction$diameter")
+                            if (loadIndex.isNotEmpty()) append(" $loadIndex")
+                            if (speedRating.isNotEmpty()) append(speedRating)
+                            if (loadRangeCode.isNotEmpty()) append(" $loadRangeCode")
+                        }
                     }
                 }
             }
