@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tireRepository: TireRepository
     private lateinit var syncManager: SyncManager
     private lateinit var barcodeText: TextView
-    private lateinit var clearButton: Button
+    private lateinit var manualButton: Button
     private lateinit var historyRecyclerView: RecyclerView
     private lateinit var emptyHistoryText: TextView
     private lateinit var historyCountText: TextView
@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         syncManager = SyncManager(this, tireRepository, BuildConfig.SYNC_TOKEN)
 
         barcodeText = findViewById(R.id.barcodeText)
-        clearButton = findViewById(R.id.clearButton)
+        manualButton = findViewById(R.id.manualButton)
         historyRecyclerView = findViewById(R.id.historyRecyclerView)
         emptyHistoryText = findViewById(R.id.emptyHistoryText)
         historyCountText = findViewById(R.id.historyCountText)
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
             scanHistoryAdapter.notifyDataSetChanged()
         }
 
-        clearButton.setOnClickListener { clearDisplay() }
+        manualButton.setOnClickListener { showManualEntryDialog("", null) }
         handleIntent(intent)
     }
 
