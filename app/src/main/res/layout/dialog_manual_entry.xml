@@ -36,8 +36,26 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginBottom="12dp"
             android:background="#E0E0E0" />
+
+        <EditText
+            android:id="@+id/tireSizeInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="e.g. 255/70R17 "
+            android:inputType="textNoSuggestions"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#1a1a1a"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit above or fill fields below"
+            android:textSize="11sp"
+            android:textColor="#AAAAAA"
+            android:layout_marginBottom="12dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -106,14 +124,14 @@
             android:layout_marginBottom="12dp"
             android:visibility="gone">
             <TextView android:layout_width="110dp" android:layout_height="wrap_content"
-                android:text="Overall Diameter" android:textSize="13sp" android:textColor="#666666" />
+                android:text="Overall Dia." android:textSize="13sp" android:textColor="#666666" />
             <EditText android:id="@+id/metricOverallInput"
                 android:layout_width="80dp" android:layout_height="wrap_content"
                 android:hint="37" android:inputType="number" android:maxLength="3"
                 android:textSize="16sp" />
         </LinearLayout>
 
-        <!-- Width — decimal allowed for 12.50 style -->
+        <!-- Width -->
         <LinearLayout
             android:id="@+id/rowWidth"
             android:layout_width="match_parent"
