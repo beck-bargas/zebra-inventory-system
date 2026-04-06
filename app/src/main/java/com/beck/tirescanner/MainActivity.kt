@@ -856,12 +856,4 @@ class MainActivity : AppCompatActivity() {
             historyCountText.text = "${scanHistoryAdapter.getCount()} scan${if (scanHistoryAdapter.getCount() == 1) "" else "s"}"
         }
     }
-
-    private fun clearDisplay() {
-        barcodeText.text = "No barcode scanned"
-        scanHistoryAdapter.clear()
-        emptyHistoryText.visibility = View.VISIBLE
-        historyRecyclerView.visibility = View.GONE
-        historyCountText.text = "0 scans"
-    }
 }
