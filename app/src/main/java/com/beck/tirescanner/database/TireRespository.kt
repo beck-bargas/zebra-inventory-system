@@ -80,6 +80,14 @@ class TireRepository(context: Context) {
         return tire
     }
 
+    fun getTireBySku(sku: String): TireEntry? {
+        val db = dbHelper.readableDatabase
+        val cursor = db.query("tires", null, "sku = ?", arrayOf(sku), null, null, null)
+        val tire = if (cursor.moveToFirst()) cursorToTireEntry(cursor) else null
+        cursor.close()
+        return tire
+    }
+
     fun getTireByDetails(barcode: String, brand: String?, size: String?): TireEntry? {
         val db = dbHelper.readableDatabase
         val cursor = db.query(
@@ -119,9 +127,11 @@ class TireRepository(context: Context) {
         val db = dbHelper.writableDatabase
         val existingSku = getTireByBarcode(barcode)?.sku
             ?: product.mpn?.takeIf { it.isNotEmpty() }?.let { mpn ->
-                (mpn.take(5).padEnd(5, '0') + "0").uppercase()
+                val derived = mpn.take(6).padEnd(6, '0').uppercase()
+                if (getTireBySku(derived) == null) derived else TireEntry.generateSku()
             }
             ?: TireEntry.generateSku()
+
         val name = TireEntry.extractNameFromTitle(product.title, product.mpn)
             ?: product.brand
             ?: ""
@@ -211,6 +221,7 @@ class TireRepository(context: Context) {
             saveToCache(remote.barcode, remote.brand, remote.size, remote.imageUrl, remote.name)
         }
     }
+
     fun deleteNotInList(syncIds: List<String>) {
         Log.d("TireRepo", "deleteNotInList called with ${syncIds.size} ids")
         val db = dbHelper.writableDatabase
