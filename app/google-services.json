@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "769879015172",
+    "project_id": "nixs-inventory",
+    "storage_bucket": "nixs-inventory.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:769879015172:android:86bfbfa2f3ebc095cb5a51",
+        "android_client_info": {
+          "package_name": "com.beck.tirescanner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBp59ZAU2g129VRF_fEU9187M0IJJgRFzA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
