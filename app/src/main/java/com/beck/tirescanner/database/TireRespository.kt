@@ -126,7 +126,7 @@ class TireRepository(context: Context) {
     fun insertTire(product: Product, barcode: String, quantity: Int): Long {
         val db = dbHelper.writableDatabase
         val existingSku = getTireByBarcode(barcode)?.sku
-            ?: product.mpn?.takeIf { it.isNotEmpty() }?.let { mpn ->
+            ?: product.mpn?.takeIf { it.isNotEmpty() && it.length >= 6 && it.all { c -> c.isDigit() } }?.let { mpn ->
                 val derived = mpn.take(6).padEnd(6, '0').uppercase()
                 if (getTireBySku(derived) == null) derived else TireEntry.generateSku()
             }
