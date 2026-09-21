@@ -60,13 +60,6 @@ handhelds have to agree on what's in stock without a server in the middle.
 
 ---
 
-## Screenshots
-
-> _Add 2–3 screenshots here — the home screen with IN/OUT cards, the inventory list, and a
-> scan result dialog._
-
----
-
 ## Architecture
 
 ```
