@@ -26,7 +26,7 @@
 ---
 
 TireScanner is an Android inventory system for a working tire shop. Staff scan a tire's
-barcode with a Zebra TC22 handheld, the app resolves it to a brand, model, and size, and
+barcode with a Zebra TC21 handheld, the app resolves it to a brand, model, and size, and
 stock moves in or out in one motion — no typing, no laptop, and no dependence on the
 building's internet connection.
 
